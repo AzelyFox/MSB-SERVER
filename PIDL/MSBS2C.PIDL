@@ -1,0 +1,23 @@
+global MSBS2C 4000
+{
+	OnLoginResult([in] int result, [in] int num, [in] String id, [in] String nick, [in] int rank, [in] int money, [in] int cash, [in] int weapon, [in] int skin, [in] int game, [in] String message);
+	OnRegisterResult([in] int result, [in] String message);
+	OnStatusResult([in] int result, [in] int num, [in] String id, [in] String nick, [in] int rank, [in] int money, [in] int cash, [in] int weapon, [in] int skin, [in] int game, [in] String message);
+	OnSoloMatched([in] int result, [in] int room, [in] String message);
+	OnTeamMatched([in] int result, [in] int room, [in] String message);
+	OnGameInfo([in] int result, [in] int room, [in] int mode, [in] String users);
+	OnGameStatusCountdown([in] int count);
+	OnGameStatusTime([in] int time);
+	OnGameStatusReady([in] String data);
+	OnGameStatusScore([in] int blueKill, [in] int blueDeath, [in] int bluePoint, [in] int redKill, [in] int redDeath, [in] int redPoint);
+	OnGameStatusMessage([in] int type, [in] String message);
+	OnGameEventHealth([in] int num, [in] int health);
+	OnGameEventDamage([in] int from, [in] int to, [in] int amount, [in] String option);
+	OnGameEventObject([in] int num, [in] int health);
+	OnGameEventItem([in] int type, [in] int num, [in] int action);
+	OnGameEventKill([in] int from, [in] int to, [in] String option);
+	OnGameEventRespawn([in] int num, [in] int time);
+	OnGameResult([in] String data);
+	OnGameUserMove([in] String data);
+	OnGameUserSync([in] String data);
+}

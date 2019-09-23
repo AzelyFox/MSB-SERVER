@@ -1,0 +1,5 @@
+global MSBC2C 6000
+{
+	OnGameMove([in] int room, [in] String data);
+	OnGameSync([in] int room, [in] String data);
+}

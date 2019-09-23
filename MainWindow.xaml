@@ -1,0 +1,277 @@
+﻿<Window x:Class="MSB_SERVER.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:resource="clr-namespace:MSB_SERVER.Properties"
+        xmlns:local="clr-namespace:MSB_SERVER"
+        mc:Ignorable="d"
+        Title="MSB SERVER" 
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        BorderThickness="1"
+        Height="600"
+        Width="1000">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=titleBar}"/>
+    </WindowChrome.WindowChrome>
+    <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
+        <DockPanel Background="Black" DockPanel.Dock="Top" Height="28" Name="titleBar">
+            <Image DockPanel.Dock="Left" Stretch="Fill" Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\icon.png" Name="mainIcon" Width="22" Height="22" Margin="3,3,40,3" />
+            <Button
+                DockPanel.Dock="Right"
+                Margin="4,0,8,0"
+                Width="14"
+                Height="14"
+                Name="titleEnd"
+                Click="OnTitleEndClicked"
+                Padding="-1"
+                Background="White">
+                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_end.png" Name="titleEndIcon" Width="14" Height="14"/>
+            </Button>
+            <Button
+                DockPanel.Dock="Right"
+                Margin="4,0,4,0"
+                Width="14"
+                Height="14"
+                Name="titleMax"
+                Click="OnTitleMaxClicked"
+                Padding="-1"
+                Background="White">
+                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_max.png" Name="titleMaxIcon" Width="14" Height="14"/>
+            </Button>
+            <Button
+                DockPanel.Dock="Right"
+                Margin="4,0,4,0"
+                Width="14"
+                Height="14"
+                Name="titleMin"
+                Click="OnTitleMinClicked"
+                Padding="-1"
+                Background="White">
+                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_min.png" Name="titleMinIcon" Width="14" Height="14"/>
+            </Button>
+            <TextBlock 
+                DockPanel.Dock="Top"
+                Text="{Binding Title, RelativeSource={RelativeSource FindAncestor,AncestorType=Window},FallbackValue='MSB SERVER'}"
+                Width="Auto"
+                Height="24"
+                Margin="2"
+                FontSize="16"
+                Foreground="White"
+                TextAlignment="Center"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch">
+            </TextBlock>
+        </DockPanel>
+        <Grid 
+            Width="{Binding ActualWidth, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DockPanel}}}" 
+            Height="Auto"
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="0.5*" />
+                <RowDefinition Height="0.5*" />
+                <RowDefinition Height="1.5*" />
+                <RowDefinition Height="0.5*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="0.5*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="0.5*" />
+                <RowDefinition Height="1*" />
+                <RowDefinition Height="0.5*" />
+            </Grid.RowDefinitions>
+            <Border Name="mainServerBlock" Background="LightGray" Grid.ColumnSpan="10" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainServerStatus" Text="{x:Static Member=resource:Resources.STATUS_NOT_RUNNING}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Grid.ColumnSpan="6" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBox Name="mainEditorIP" Margin="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                            <Style.Resources>
+                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Center" AlignmentY="Center" Stretch="None">
+                                    <VisualBrush.Visual>
+                                        <Label Content="{x:Static Member=resource:Resources.STRING_IP}" Foreground="LightGray" />
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </Style.Resources>
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="{x:Static sys:String.Empty}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="Text" Value="{x:Null}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter Property="Background" Value="White" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </Border>
+            <Border Grid.ColumnSpan="2" Grid.Row="1" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBox Name="mainEditorPort" Margin="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                            <Style.Resources>
+                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Center" AlignmentY="Center" Stretch="None">
+                                    <VisualBrush.Visual>
+                                        <Label Content="{x:Static Member=resource:Resources.STRING_PORT}" Foreground="LightGray" />
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </Style.Resources>
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="{x:Static sys:String.Empty}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="Text" Value="{x:Null}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter Property="Background" Value="White" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </Border>
+            <Border Grid.ColumnSpan="2" Grid.Row="1" Grid.Column="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Button Name="mainServerButton" Content="{x:Static Member=resource:Resources.BUTTON_START}" Margin="2" Click="OnServerButtonClicked"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="4" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_MODULE}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="2" Grid.Row="2" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_STATUS}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="4" Grid.Row="2" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_ENVIRONMENT}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusSoloQueueTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusSoloQueueTitle" Text="{x:Static Member=resource:Resources.STRING_SOLOQUEUE}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusTeamQueueTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusTeamQueueTitle" Text="{x:Static Member=resource:Resources.STRING_TEAMQUEUE}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusDatabaseTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusDatabaseTitle" Text="{x:Static Member=resource:Resources.STRING_DATABASE}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusLogTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusLogTitle" Text="{x:Static Member=resource:Resources.STRING_LOGGER}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusUserTitleBlock" Background="Black" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusUserTitle" Text="{x:Static Member=resource:Resources.STRING_USER}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusRoomTitleBlock" Background="Black" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusRoomTitle" Text="{x:Static Member=resource:Resources.STRING_ROOM}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusPingTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusPingTitle" Text="{x:Static Member=resource:Resources.STRING_PINGMODULE}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusUptimeTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusUptimeTitle" Text="{x:Static Member=resource:Resources.STRING_UPTIME}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusCpuTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusCpuTitle" Text="{x:Static Member=resource:Resources.STRING_CPU}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusRamTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="9" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusRamTitle" Text="{x:Static Member=resource:Resources.STRING_RAM}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusSoloQueueBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusSoloQueue" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusTeamQueueBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusTeamQueue" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusDatabaseBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusDatabase" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusLogBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusLog" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusUserBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusUser" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusRoomBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusRoom" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusPingBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusPing" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusUptimeBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusUptime" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusCpuBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusCpu" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Name="mainStatusRamBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="9" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusRam" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="4" Grid.Row="5" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_LOG_SYSTEM}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="2" Grid.Row="5" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_LOG_USER}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="2" Grid.Row="8" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_LOG_ROOM}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="Black" Grid.ColumnSpan="4" Grid.Row="5" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_LOG_NETWORK}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBox Name="mainSystemLog" Grid.ColumnSpan="4" Grid.RowSpan="5" Grid.Row="6" Grid.Column="0" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainUserLog" Grid.ColumnSpan="2" Grid.RowSpan="2" Grid.Row="6" Grid.Column="4" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainRoomLog" Grid.ColumnSpan="2" Grid.RowSpan="2" Grid.Row="9" Grid.Column="4" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainNetworkLog" Grid.ColumnSpan="4" Grid.RowSpan="5" Grid.Row="6" Grid.Column="6" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <Border Background="Black" Grid.ColumnSpan="10" Grid.Row="11" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Text="{x:Static Member=resource:Resources.STRING_COMMAND}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <Border Grid.ColumnSpan="10" Grid.Row="12" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBox Name="mainEditorCommand" Margin="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" KeyDown="OnCommandKeyDown">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                            <Style.Resources>
+                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Center" AlignmentY="Center" Stretch="None">
+                                    <VisualBrush.Visual>
+                                        <Label Content="{x:Static Member=resource:Resources.STRING_COMMAND}" Foreground="LightGray" />
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </Style.Resources>
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="{x:Static sys:String.Empty}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="Text" Value="{x:Null}">
+                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter Property="Background" Value="White" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </Border>
+            <TextBlock Text="{x:Static Member=resource:Resources.STRING_VERSION}" Grid.ColumnSpan="6" Grid.Row="13" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Text="{x:Static Member=resource:Resources.STRING_COPYRIGHT}" Grid.ColumnSpan="4" Grid.Row="13" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+    </DockPanel>
+</Window>

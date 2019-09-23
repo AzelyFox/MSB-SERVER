@@ -1,0 +1,16 @@
+global MSBC2S 5000
+{
+	OnLoginRequest([in] String id, [in] String pw);
+	OnRegisterRequest([in] String id, [in] String pw, [in] String nick);
+	OnStatusRequest([in] String id);
+	OnSoloQueueRequest([in] int weapon, [in] int skin);
+	OnTeamQueueRequest([in] int weapon, [in] int skin);
+	OnQuitQueueRequest();
+	OnGameInfoRequest([in] int room);
+	OnGameActionReady([in] int room);
+	OnGameActionDamage([in] int room, [in] int num, [in] int amount, [in] String option);
+	OnGameActionObject([in] int room, [in] int num, [in] int amount);
+	OnGameActionItem([in] int room, [in] int type, [in] int num);
+	OnGameUserMove([in] int room, [in] String data);
+	OnGameUserSync([in] int room, [in] String data);
+}
