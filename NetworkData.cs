@@ -18,7 +18,6 @@ namespace MSB_SERVER
 		{
 			public int userNumber;
 			public string userID;
-			public string userPW;
 			public string userNick;
 			public int userRank;
 			public int userMoney;
@@ -26,11 +25,10 @@ namespace MSB_SERVER
 			public int userWeapon;
 			public int userSkin;
 
-			public UserData(int _userNUM, string _userID, string _userPW, string _userNICK)
+			public UserData(int _userNUM, string _userID, string _userNICK)
 			{
 				this.userNumber = _userNUM;
 				this.userID = _userID;
-				this.userPW = _userPW;
 				this.userNick = _userNICK;
 				this.userRank = 0;
 				this.userMoney = 0;

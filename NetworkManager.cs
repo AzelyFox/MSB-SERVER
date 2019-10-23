@@ -24,7 +24,6 @@ namespace MSB_SERVER
 		private IPAddress SERVER_IP;
 		private int SERVER_PORT;
 
-        public bool serverRunLoop;
         private NetServer networkServer;
         private Nettention.Proud.ThreadPool netWorkerThreadPool = new Nettention.Proud.ThreadPool(4);
         private Nettention.Proud.ThreadPool userWorkerThreadPool = new Nettention.Proud.ThreadPool(4);
@@ -74,10 +73,10 @@ namespace MSB_SERVER
 
                 if (networkServer != null)
                 {
-                    networkServer.Dispose();
+                    //networkServer.Dispose();
+                    networkServer = null;
                 }
                 networkServer = new NetServer();
-                serverRunLoop = true;
                 networkServer.AttachStub(netC2SStub);
                 networkServer.AttachProxy(netS2CProxy);
 
@@ -152,8 +151,8 @@ namespace MSB_SERVER
                 startParameter.protocolVersion = new Nettention.Proud.Guid(guidVersion);
                 startParameter.tcpPorts = new IntArray();
                 startParameter.tcpPorts.Add(SERVER_PORT);
-                startParameter.serverAddrAtClient = "203.250.148.54";
-                startParameter.localNicAddr = "203.250.148.54";
+                startParameter.serverAddrAtClient = "203.250.148.113";
+                startParameter.localNicAddr = "203.250.148.113";
                 startParameter.SetExternalNetWorkerThreadPool(netWorkerThreadPool);
                 startParameter.SetExternalUserWorkerThreadPool(userWorkerThreadPool);
 
@@ -175,6 +174,7 @@ namespace MSB_SERVER
             } catch (Exception e)
             {
                 ((MSB_SERVER.App) Application.Current).MSBUnhandledException(e, "NetworkManager");
+                ServerStop();
             }
 		}
 
@@ -190,8 +190,9 @@ namespace MSB_SERVER
 			serverApplication.databaseManager.StopDatabase();
 			serverApplication.logManager.StopLogger();
 
-            networkServer.Dispose();
-		}
+            //networkServer.Dispose();
+            networkServer = null;
+        }
 
         private void InitializeListeners()
         {

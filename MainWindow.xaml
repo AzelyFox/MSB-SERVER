@@ -14,11 +14,11 @@
         Height="600"
         Width="1000">
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=titleBar}"/>
+        <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=TitleBar}"/>
     </WindowChrome.WindowChrome>
     <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
-        <DockPanel Background="Black" DockPanel.Dock="Top" Height="28" Name="titleBar">
-            <Image DockPanel.Dock="Left" Stretch="Fill" Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\icon.png" Name="mainIcon" Width="22" Height="22" Margin="3,3,40,3" />
+        <DockPanel Background="Black" DockPanel.Dock="Top" Height="28" Name="TitleBar">
+            <Image DockPanel.Dock="Left" Stretch="Fill" Source="Resources\icon.png" Name="mainIcon" Width="22" Height="22" Margin="3,3,40,3" />
             <Button
                 DockPanel.Dock="Right"
                 Margin="4,0,8,0"
@@ -28,7 +28,7 @@
                 Click="OnTitleEndClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_end.png" Name="titleEndIcon" Width="14" Height="14"/>
+                <Image Source="Resources\title_end.png" Name="titleEndIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleEndClickedM"/>
             </Button>
             <Button
                 DockPanel.Dock="Right"
@@ -39,7 +39,7 @@
                 Click="OnTitleMaxClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_max.png" Name="titleMaxIcon" Width="14" Height="14"/>
+                <Image Source="Resources\title_max.png" Name="titleMaxIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMaxClickedM"/>
             </Button>
             <Button
                 DockPanel.Dock="Right"
@@ -50,7 +50,7 @@
                 Click="OnTitleMinClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="D:\LimeCake\Projects\MSB_SERVER\MSB_SERVER\Resources\title_min.png" Name="titleMinIcon" Width="14" Height="14"/>
+                <Image Source="Resources\title_min.png" Name="titleMinIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMinClickedM"/>
             </Button>
             <TextBlock 
                 DockPanel.Dock="Top"

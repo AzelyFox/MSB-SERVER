@@ -33,12 +33,17 @@ namespace MSB_SERVER
 		private void InitializeTitleBar()
 		{
 			WINDOW_STATE_MAXIMIZED = false;
-			titleBar.MouseDown += new MouseButtonEventHandler(OnTitleBarMouseDown);
+			TitleBar.MouseDown += new MouseButtonEventHandler(OnTitleBarMouseDown);
 		}
 
 		private void OnTitleMinClicked(object sender, RoutedEventArgs e)
 		{
 			this.WindowState = WindowState.Minimized;
+		}
+		
+		private void OnTitleMinClickedM(object sender, MouseEventArgs e)
+		{
+			OnTitleMinClicked(sender, new RoutedEventArgs());
 		}
 
 		private void OnTitleMaxClicked(object sender, RoutedEventArgs e)
@@ -53,10 +58,20 @@ namespace MSB_SERVER
 				WINDOW_STATE_MAXIMIZED = true;
 			}
 		}
+		
+		private void OnTitleMaxClickedM(object sender, MouseEventArgs e)
+		{
+			OnTitleMaxClicked(sender, new RoutedEventArgs());
+		}
 
 		private void OnTitleEndClicked(object sender, RoutedEventArgs e)
 		{
 			Application.Current.Shutdown();
+		}
+		
+		private void OnTitleEndClickedM(object sender, MouseEventArgs e)
+		{
+			OnTitleEndClicked(sender, new RoutedEventArgs());
 		}
 
 		private void OnTitleBarMouseDown(object sender, MouseButtonEventArgs e)
