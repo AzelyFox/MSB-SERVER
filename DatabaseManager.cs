@@ -53,6 +53,7 @@ namespace MSB_SERVER
 				{
 					totalUser = Int32.Parse(userSearchReader[0].ToString());
 				}
+				userSearchReader.Close();
 			}
 			catch (Exception e)
 			{
@@ -141,7 +142,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand("SELECT * FROM `users` WHERE `user_id` = " + _id, dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{
@@ -186,7 +187,7 @@ namespace MSB_SERVER
 			catch (Exception e)
 			{
 				_userData = null;
-				message = "DB 문제가 발생하였습니다";
+				message = "DB 문제가 발생하였습니다 : " + e.Message;
 				return false;
 			}
 		}
@@ -195,7 +196,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand("SELECT * FROM `users` WHERE `user_id` = " + _id, dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{
@@ -205,7 +206,7 @@ namespace MSB_SERVER
 				}
 				userSearchReader.Close();
 				string passwordHash = BCrypt.Net.BCrypt.HashPassword(_pw);
-				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `users` (`user_id`, `user_pw`) VALUES (`{_id}`, `{passwordHash}`)", dbConnection);
+				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `users` (`user_id`, `user_pw`) VALUES ('{_id}', '{passwordHash}')", dbConnection);
 				int inserted = userInsertCommand.ExecuteNonQuery();
 				if (inserted != 1)
 				{
@@ -218,7 +219,7 @@ namespace MSB_SERVER
 			}
 			catch (Exception e)
 			{
-				message = "DB 문제가 발생하였습니다";
+				message = "DB 문제가 발생하였습니다 : " + e.Message;
 				return false;
 			}
 		}
@@ -227,7 +228,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand("SELECT * FROM `users` WHERE `user_id` = " + _id, dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{
@@ -256,7 +257,7 @@ namespace MSB_SERVER
 			catch (Exception e)
 			{
 				_userData = null;
-				message = "DB 문제가 발생하였습니다";
+				message = "DB 문제가 발생하였습니다 : " + e.Message;
 				return false;
 			}
 		}
