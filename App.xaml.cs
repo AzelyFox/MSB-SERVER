@@ -8,7 +8,6 @@ using System.Windows;
 
 namespace MSB_SERVER
 {
-	// TODO 스레드 메서드 STATIC 화
 	public partial class App : Application
 	{
 		public NetworkManager networkManager;

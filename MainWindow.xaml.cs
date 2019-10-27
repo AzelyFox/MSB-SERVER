@@ -33,7 +33,14 @@ namespace MSB_SERVER
 		private void InitializeTitleBar()
 		{
 			WINDOW_STATE_MAXIMIZED = false;
-			TitleBar.MouseDown += new MouseButtonEventHandler(OnTitleBarMouseDown);
+			titleBar.MouseDown += new MouseButtonEventHandler(OnTitleBarMouseDown);
+			titleMainIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/icon.png", UriKind.Relative));
+			titleMinIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/title_min.png", UriKind.Relative));
+			titleMaxIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/title_max.png", UriKind.Relative));
+			titleEndIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/title_end.png", UriKind.Relative));
+			titleMinIcon.MouseLeftButtonUp += OnTitleMinClickedM;
+			titleMaxIcon.MouseLeftButtonUp += OnTitleMaxClickedM;
+			titleEndIcon.MouseLeftButtonUp += OnTitleEndClickedM;
 		}
 
 		private void OnTitleMinClicked(object sender, RoutedEventArgs e)
@@ -111,12 +118,10 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				if (serverApplication != null && serverApplication.networkManager.IsServerRunning())
-				{
-					serverApplication.networkManager.ServerStop();
-				}
+				serverApplication.networkManager.ServerStop();
 			}
 			catch { }
+			System.Windows.Application.Current.Shutdown();
 		}
 	}
 }

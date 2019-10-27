@@ -13,12 +13,14 @@
         BorderThickness="1"
         Height="600"
         Width="1000">
+    <!--
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=TitleBar}"/>
+        <WindowChrome CaptionHeight="{Binding ActualHeight,ElementName=titleBar}"/>
     </WindowChrome.WindowChrome>
+    -->
     <DockPanel HorizontalAlignment="Stretch" LastChildFill="true">
-        <DockPanel Background="Black" DockPanel.Dock="Top" Height="28" Name="TitleBar">
-            <Image DockPanel.Dock="Left" Stretch="Fill" Source="Resources\icon.png" Name="mainIcon" Width="22" Height="22" Margin="3,3,40,3" />
+        <DockPanel Background="Black" DockPanel.Dock="Top" Height="28" Name="titleBar">
+            <Image DockPanel.Dock="Left" Stretch="Fill" Name="titleMainIcon" Width="22" Height="22" Margin="3,3,40,3" />
             <Button
                 DockPanel.Dock="Right"
                 Margin="4,0,8,0"
@@ -28,7 +30,7 @@
                 Click="OnTitleEndClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="Resources\title_end.png" Name="titleEndIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleEndClickedM"/>
+                <Image Name="titleEndIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleEndClickedM"/>
             </Button>
             <Button
                 DockPanel.Dock="Right"
@@ -39,7 +41,7 @@
                 Click="OnTitleMaxClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="Resources\title_max.png" Name="titleMaxIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMaxClickedM"/>
+                <Image Name="titleMaxIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMaxClickedM"/>
             </Button>
             <Button
                 DockPanel.Dock="Right"
@@ -50,7 +52,7 @@
                 Click="OnTitleMinClicked"
                 Padding="-1"
                 Background="White">
-                <Image Source="Resources\title_min.png" Name="titleMinIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMinClickedM"/>
+                <Image Name="titleMinIcon" Width="14" Height="14" MouseLeftButtonDown="OnTitleMinClickedM"/>
             </Button>
             <TextBlock 
                 DockPanel.Dock="Top"
@@ -237,10 +239,12 @@
             <Border Background="Black" Grid.ColumnSpan="4" Grid.Row="5" Grid.Column="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Text="{x:Static Member=resource:Resources.STRING_LOG_NETWORK}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
-            <TextBox Name="mainSystemLog" Grid.ColumnSpan="4" Grid.RowSpan="5" Grid.Row="6" Grid.Column="0" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainSystemLog" Grid.ColumnSpan="4" Grid.RowSpan="3" Grid.Row="6" Grid.Column="0" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainSystemErrorLog" Grid.ColumnSpan="4" Grid.RowSpan="2" Grid.Row="9" Grid.Column="0" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
             <TextBox Name="mainUserLog" Grid.ColumnSpan="2" Grid.RowSpan="2" Grid.Row="6" Grid.Column="4" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
             <TextBox Name="mainRoomLog" Grid.ColumnSpan="2" Grid.RowSpan="2" Grid.Row="9" Grid.Column="4" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
-            <TextBox Name="mainNetworkLog" Grid.ColumnSpan="4" Grid.RowSpan="5" Grid.Row="6" Grid.Column="6" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainNetworkLog" Grid.ColumnSpan="4" Grid.RowSpan="3" Grid.Row="6" Grid.Column="6" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
+            <TextBox Name="mainNetworkErrorLog" Grid.ColumnSpan="4" Grid.RowSpan="2" Grid.Row="9" Grid.Column="6" Margin="2" IsReadOnly="True" BorderThickness="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="True"/>
             <Border Background="Black" Grid.ColumnSpan="10" Grid.Row="11" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Text="{x:Static Member=resource:Resources.STRING_COMMAND}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>

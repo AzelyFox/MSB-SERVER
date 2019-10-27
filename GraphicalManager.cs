@@ -24,9 +24,8 @@ namespace MSB_SERVER
 		private TextBlock mainStatusSoloQueueTitle, mainStatusTeamQueueTitle, mainStatusDatabaseTitle, mainStatusLogTitle, mainStatusUserTitle, mainStatusRoomTitle, mainStatusPingTitle, mainStatusUptimeTitle, mainStatusCpuTitle, mainStatusRamTitle;
 		private Border mainStatusSoloQueueBlock, mainStatusTeamQueueBlock, mainStatusDatabaseBlock, mainStatusLogBlock, mainStatusUserBlock, mainStatusRoomBlock, mainStatusPingBlock, mainStatusUptimeBlock, mainStatusCpuBlock, mainStatusRamBlock;
 		private TextBlock mainStatusSoloQueue, mainStatusTeamQueue, mainStatusDatabase, mainStatusLog, mainStatusUser, mainStatusRoom, mainStatusPing, mainStatusUptime, mainStatusCpu, mainStatusRam;
-		private TextBox mainSystemLogBox, mainNetworkLogBox, mainUserLogBox, mainRoomLogBox;
-
-
+		private TextBox mainSystemLogBox, mainNetworkLogBox, mainSystemErrorLogBox, mainNetworkErrorLogBox, mainUserLogBox, mainRoomLogBox;
+		
 		private GraphicalManager()
 		{
 			serverApplication = (MSB_SERVER.App) Application.Current;
@@ -100,12 +99,14 @@ namespace MSB_SERVER
 			mainStatusCpu = (TextBlock) mainWindow.FindName("mainStatusCpu");
 			mainStatusRam = (TextBlock) mainWindow.FindName("mainStatusRam");
 			mainSystemLogBox = (TextBox) mainWindow.FindName("mainSystemLog");
+			mainSystemErrorLogBox = (TextBox) mainWindow.FindName("mainSystemErrorLog");
 			mainNetworkLogBox = (TextBox) mainWindow.FindName("mainNetworkLog");
+			mainNetworkErrorLogBox = (TextBox) mainWindow.FindName("mainNetworkErrorLog");
 			mainUserLogBox = (TextBox) mainWindow.FindName("mainUserLog");
 			mainRoomLogBox = (TextBox) mainWindow.FindName("mainRoomLog");
 
-			serverApplication.logManager.SetSystemLogger(mainSystemLogBox);
-			serverApplication.logManager.SetNetworkLogger(mainNetworkLogBox);
+			serverApplication.logManager.SetSystemLogger(mainSystemLogBox, mainSystemErrorLogBox);
+			serverApplication.logManager.SetNetworkLogger(mainNetworkLogBox, mainNetworkErrorLogBox);
 			serverApplication.logManager.SetUserLogger(mainUserLogBox);
 			serverApplication.logManager.SetRoomLogger(mainRoomLogBox);
 		}

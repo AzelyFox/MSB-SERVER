@@ -47,7 +47,7 @@ namespace MSB_SERVER
 				}
 
 				dbConnection.Open();
-				MySqlCommand userSearchCommand = new MySqlCommand("SELECT COUNT(`user_index`) FROM `users`", dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand("SELECT COUNT(`user_index`) FROM `user`", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				while (userSearchReader.Read())
 				{
@@ -142,7 +142,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{
@@ -196,7 +196,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{
@@ -206,7 +206,7 @@ namespace MSB_SERVER
 				}
 				userSearchReader.Close();
 				string passwordHash = BCrypt.Net.BCrypt.HashPassword(_pw);
-				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `users` (`user_id`, `user_pw`) VALUES ('{_id}', '{passwordHash}')", dbConnection);
+				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `user` (`user_id`, `user_pw`) VALUES ('{_id}', '{passwordHash}')", dbConnection);
 				int inserted = userInsertCommand.ExecuteNonQuery();
 				if (inserted != 1)
 				{
@@ -228,7 +228,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `users` WHERE `user_id` = '{_id}'", dbConnection);
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
 				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
 				if (userSearchReader.Read())
 				{

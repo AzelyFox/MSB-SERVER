@@ -80,7 +80,7 @@ namespace MSB_SERVER
 				switch(command[0].ToUpper())
 				{
 					case COMMAND_ACTION.ACTION_HELP:
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "...");
+						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "clear all/system/network\ndebug on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
 						break;
                     case COMMAND_ACTION.ACTION_CLEAR:
                         try

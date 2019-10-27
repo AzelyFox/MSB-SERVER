@@ -15,7 +15,9 @@ namespace MSB_SERVER
 		private MSB_SERVER.App serverApplication;
 
 		private TextBox mainSystemLogBox;
+		private TextBox mainSystemErrorLogBox;
 		private TextBox mainNetworkLogBox;
+		private TextBox mainNetworkErrorLogBox;
 		private TextBox mainUserLogBox;
 		private TextBox mainRoomLogBox;
 
@@ -59,14 +61,16 @@ namespace MSB_SERVER
 			return INSTANCE;
 		}
 
-		public void SetSystemLogger(TextBox textBox)
+		public void SetSystemLogger(TextBox logBox, TextBox errorBox)
 		{
-			mainSystemLogBox = textBox;
+			mainSystemLogBox = logBox;
+			mainSystemErrorLogBox = errorBox;
 		}
 
-		public void SetNetworkLogger(TextBox textBox)
+		public void SetNetworkLogger(TextBox logBox, TextBox errorBox)
 		{
-			mainNetworkLogBox = textBox;
+			mainNetworkLogBox = logBox;
+			mainNetworkErrorLogBox = errorBox;
 		}
 
 		public void SetUserLogger(TextBox textBox)
@@ -199,16 +203,33 @@ namespace MSB_SERVER
 				case LOG_TARGET.LOG_SYSTEM:
 					mainSystemLogBox.AppendText(printString);
 					if (SCROLL_TO_END) mainSystemLogBox.ScrollToEnd();
+					if (log.logLevel == LOG_LEVEL.LOG_CRITICAL)
+					{
+						mainSystemErrorLogBox.AppendText(printString);
+						if (SCROLL_TO_END) mainSystemErrorLogBox.ScrollToEnd();
+					}
 					break;
 				case LOG_TARGET.LOG_NETWORK:
 					mainNetworkLogBox.AppendText(printString);
                     if (SCROLL_TO_END) mainNetworkLogBox.ScrollToEnd();
+					if (log.logLevel == LOG_LEVEL.LOG_CRITICAL)
+					{
+						mainNetworkErrorLogBox.AppendText(printString);
+						if (SCROLL_TO_END) mainSystemErrorLogBox.ScrollToEnd();
+					}
 					break;
 				default:
 					mainSystemLogBox.AppendText(printString);
                     if (SCROLL_TO_END) mainSystemLogBox.ScrollToEnd();
 					mainNetworkLogBox.AppendText(printString);
                     if (SCROLL_TO_END) mainNetworkLogBox.ScrollToEnd();
+					if (log.logLevel == LOG_LEVEL.LOG_CRITICAL)
+					{
+						mainSystemErrorLogBox.AppendText(printString);
+						if (SCROLL_TO_END) mainSystemErrorLogBox.ScrollToEnd();
+						mainNetworkErrorLogBox.AppendText(printString);
+						if (SCROLL_TO_END) mainSystemErrorLogBox.ScrollToEnd();
+					}
 					break;
 			}
 			

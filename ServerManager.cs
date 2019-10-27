@@ -668,9 +668,10 @@ namespace MSB_SERVER
 					if (soloGameQueue == null || soloGameQueue.Count < 2)
 					{
 						serverApplication.graphicalManager.OnSoloModuleStatusChanged(true, true, soloGameQueue.Count);
-						Thread.Sleep(1000);
+						Thread.Sleep(3000);
 						continue;
 					}
+					soloGameQueue.Sort((NetworkData.ClientData clientA, NetworkData.ClientData clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
 					while (true)
 					{
 						if (soloGameQueue == null || soloGameQueue.Count < 2)
@@ -735,9 +736,10 @@ namespace MSB_SERVER
 					if (teamGameQueue == null || teamGameQueue.Count < 2)
 					{
 						serverApplication.graphicalManager.OnTeamModuleStatusChanged(true, true, teamGameQueue.Count);
-						Thread.Sleep(1000);
+						Thread.Sleep(3000);
 						continue;
 					}
+					teamGameQueue.Sort((NetworkData.ClientData clientA, NetworkData.ClientData clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
 					while (true)
 					{
 						if (teamGameQueue == null || teamGameQueue.Count < 6)
@@ -1010,10 +1012,6 @@ namespace MSB_SERVER
 				{
                     serverApplication.networkManager.netS2CProxy.OnLoginResult(targetClient.clientHID, RmiContext.ReliableSend, -1, -1, String.Empty, String.Empty, -1, -1, -1, -1, -1, -1, resultMSG);
                     return;
-                }
-                if (!targetClient.clientHID.Equals(hostID))
-                {
-                    // 기존 클라이언트 처리
                 }
                 targetClient.clientUser = resultUser;
                 targetClient.clientHID = hostID;
