@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace MSB_SERVER
 {
-	public partial class App : Application
+	public partial class App
 	{
 		public NetworkManager networkManager;
 		public DatabaseManager databaseManager;
@@ -18,7 +14,7 @@ namespace MSB_SERVER
 		public ServerManager serverManager;
 		public CommandManager commandManager;
 
-		void OnStartup(object sender, StartupEventArgs eventArgs)
+		private void OnStartup(object sender, StartupEventArgs eventArgs)
 		{
 			networkManager = NetworkManager.GetInstance();
 			databaseManager = DatabaseManager.GetInstance();

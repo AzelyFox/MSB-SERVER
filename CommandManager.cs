@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace MSB_SERVER
@@ -11,7 +7,7 @@ namespace MSB_SERVER
 	{
 		private static CommandManager INSTANCE;
 
-		private readonly MSB_SERVER.App serverApplication;
+		private readonly App serverApplication;
 
 		private static class COMMAND_ACTION
 		{
@@ -52,7 +48,7 @@ namespace MSB_SERVER
 
 		private CommandManager()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
+			serverApplication = (App) Application.Current;
 		}
 
 		public static CommandManager GetInstance()
@@ -63,7 +59,7 @@ namespace MSB_SERVER
 
 		public void ApplyCommand(string commandRaw)
 		{
-			if (String.IsNullOrEmpty(commandRaw))
+			if (string.IsNullOrEmpty(commandRaw))
 			{
 				return;
 			}
@@ -75,7 +71,7 @@ namespace MSB_SERVER
 
 			try
 			{
-				string[] command = commandRaw.Substring(1).Split(new char[] {' '});
+				var command = commandRaw.Substring(1).Split(' ');
 
 				switch(command[0].ToUpper())
 				{
@@ -87,7 +83,7 @@ namespace MSB_SERVER
                         {
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.CLEAR_LOG_ALL))
                             {
-                                serverApplication.logManager.ClearLog(0);
+                                serverApplication.logManager.ClearLog();
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLEARED LOG");
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.CLEAR_LOG_SYSTEM))
@@ -219,8 +215,7 @@ namespace MSB_SERVER
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_TIME))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gameTime = inputValue;
@@ -230,8 +225,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_USER_RESPAWN))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gameUserSpawn = inputValue;
@@ -241,8 +235,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_HEAL))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gameHealPackValue = inputValue;
@@ -252,8 +245,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_HEAL_RESPAWN))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gameHealPackSpawn = inputValue;
@@ -263,8 +255,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_OBJECT_HEALTH))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gameObjectHealth = inputValue;
@@ -274,8 +265,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_POINT_VALUE))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gamePointValue = inputValue;
@@ -285,8 +275,7 @@ namespace MSB_SERVER
 
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_POINT_RESPAWN))
                             {
-                                int inputValue = -1;
-                                inputValue = Int32.Parse(command[2]);
+                                var inputValue = int.Parse(command[2]);
                                 if (inputValue >= 0)
                                 {
                                     ServerManager.GameRoom.gamePointSpawn = inputValue;

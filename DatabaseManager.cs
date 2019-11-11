@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data;
+using System.Drawing.Printing;
 using System.Windows;
 using System.Threading;
 using MySql.Data.MySqlClient;
-using Org.BouncyCastle.Crypto.Generators;
 
 namespace MSB_SERVER
 {
@@ -14,25 +11,24 @@ namespace MSB_SERVER
     {
 		private static DatabaseManager INSTANCE;
 		
-		private readonly MSB_SERVER.App serverApplication;
+		private readonly App serverApplication;
 
 		private Thread databaseThread;
 
 		private MySqlConnection dbConnection;
 
-		private bool MODULE_STOP_FLAG = false;
+		private bool MODULE_STOP_FLAG;
 
-		private int totalUser = 0;
+		private int totalUser;
 
 		private DatabaseManager()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
+			serverApplication = (App) Application.Current;
 		}
 
 		public static DatabaseManager GetInstance()
 		{
-			if (INSTANCE == null) INSTANCE = new DatabaseManager();
-			return INSTANCE;
+			return INSTANCE ??= new DatabaseManager();
 		}
 
 		public void StartDatabase()
@@ -41,29 +37,19 @@ namespace MSB_SERVER
 			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 시작");
 			try
 			{
-				if (dbConnection == null)
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken)
 				{
-					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;");
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
 				}
-
-				dbConnection.Open();
-				MySqlCommand userSearchCommand = new MySqlCommand("SELECT COUNT(`user_index`) FROM `user`", dbConnection);
-				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
-				while (userSearchReader.Read())
-				{
-					totalUser = Int32.Parse(userSearchReader[0].ToString());
-				}
-				userSearchReader.Close();
 			}
 			catch (Exception e)
 			{
-				dbConnection.Close();
+				dbConnection?.Close();
 				dbConnection = null;
-				serverApplication.Dispatcher.Invoke(() => {
-					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
-					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
-					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", e.Message);
-				});
+				serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", e.Message);
 				return;
 			}
 			if (databaseThread == null || !databaseThread.IsAlive)
@@ -75,6 +61,7 @@ namespace MSB_SERVER
 			{
 				return;
 			}
+			RefreshUserCount();
 			databaseThread.Start();
 		}
 
@@ -90,9 +77,7 @@ namespace MSB_SERVER
 
 		private void DoDatabase()
 		{
-			serverApplication.Dispatcher.Invoke(new Action(() => {
-				serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, true);
-			}));
+			serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, true);
 			while (true)
 			{
 				if (MODULE_STOP_FLAG)
@@ -100,12 +85,10 @@ namespace MSB_SERVER
 					break;
 				}
 
-				if (dbConnection == null)
+				if (dbConnection == null || dbConnection.State == ConnectionState.Broken || dbConnection.State == ConnectionState.Closed)
 				{
-					serverApplication.Dispatcher.Invoke(new Action(() => {
-						serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
-					}));
+					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
+					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
 					return;
 				}
 				
@@ -114,21 +97,42 @@ namespace MSB_SERVER
 					Thread.Sleep(1000);
 				} catch (Exception e)
 				{
-					serverApplication.Dispatcher.Invoke(new Action(() => {
-						serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 에러");
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", e.ToString());
-					}));
+					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
+					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 에러");
+					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", e.ToString());
 					return;
 				}
 			}
 			
 			try
 			{
-				serverApplication.Dispatcher.Invoke(new Action(() => {
-					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 종료");
-					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(false, false);
-				}));
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 종료");
+				serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(false, false);
+			}
+			catch { }
+		}
+
+		private void RefreshUserCount()
+		{
+			try
+			{
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken)
+				{
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
+				}
+				MySqlCommand userSearchCommand = new MySqlCommand("SELECT COUNT(`user_index`) as `user_count` FROM `user`", dbConnection);
+				using (MySqlDataReader dataReader = userSearchCommand.ExecuteReader())
+				{
+					if (dataReader.Read()) {
+                    	totalUser = dataReader.GetInt32(dataReader.GetOrdinal("user_count"));
+                    }
+                    else
+                    {
+                    	totalUser = -1;
+                    }
+                    dataReader.Close();
+				}
 			}
 			catch { }
 		}
@@ -138,24 +142,37 @@ namespace MSB_SERVER
 			return totalUser;
 		}
 
-		public bool RequestUserLogin(string _id, string _pw, out NetworkData.UserData _userData, ref string message)
+		public bool RequestUserLogin(string _id, string _pw, string _uuid, out NetworkData.UserData _userData, ref string message)
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
-				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
-				if (userSearchReader.Read())
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken)
 				{
-					int user_index = Int32.Parse(userSearchReader[0].ToString());
-					string user_id = userSearchReader[1].ToString();
-					string user_pw = userSearchReader[2].ToString();
-					string user_nick = userSearchReader[3].ToString();
-					int user_cash = Int32.Parse(userSearchReader[4].ToString());
-					int user_money = Int32.Parse(userSearchReader[5].ToString());
-					userSearchReader.Close();
-					NetworkData.UserData user = new NetworkData.UserData(user_index, user_id, user_nick);
-					user.userCash = user_cash;
-					user.userMoney = user_money;
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
+				}
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserLogin", $"SELECT * FROM `user` WHERE `user_id` = '{_id}'");
+				using MySqlDataReader dataReader = userSearchCommand.ExecuteReader();
+				if (dataReader.Read())
+				{
+					int user_index = dataReader.GetInt32(dataReader.GetOrdinal("user_index"));
+					string user_id = dataReader.GetString(dataReader.GetOrdinal("user_id"));
+					string user_pw = dataReader.GetString(dataReader.GetOrdinal("user_pw"));
+					string user_nick = dataReader.GetString(dataReader.GetOrdinal("user_nick"));
+					int user_cash = dataReader.GetInt32(dataReader.GetOrdinal("user_cash"));
+					int user_money = dataReader.GetInt32(dataReader.GetOrdinal("user_money"));
+					int user_rank = dataReader.GetInt32(dataReader.GetOrdinal("user_rank"));
+					dataReader.Close();
+					
+					MySqlCommand uuidInsertCommand = new MySqlCommand($"UPDATE `user` SET `user_uuid` = '{_uuid}' WHERE `user_id` = '{_id}'", dbConnection);
+					LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserLogin", $"UPDATE `user` SET `user_uuid` = '{_uuid}' WHERE `user_id` = '{_id}'");
+					uuidInsertCommand.ExecuteNonQuery();
+
+					NetworkData.UserData user = new NetworkData.UserData(user_index, user_id, user_nick)
+					{
+						userCash = user_cash, userMoney = user_money, userRank = user_rank
+					};
 					if (BCrypt.Net.BCrypt.Verify(_pw, user_pw))
 					{
 						_userData = user;
@@ -171,10 +188,10 @@ namespace MSB_SERVER
 				}
 				else
 				{
-					userSearchReader.Close();
+					dataReader.Close();
 					if (RequestUserRegister(_id, _pw, null, ref message))
 					{
-						return RequestUserLogin(_id, _pw, out _userData, ref message);
+						return RequestUserLogin(_id, _pw, _uuid, out _userData, ref message);
 					}
 					else
 					{
@@ -187,68 +204,85 @@ namespace MSB_SERVER
 			catch (Exception e)
 			{
 				_userData = null;
-				message = "DB 문제가 발생하였습니다 : " + e.Message;
+				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRegister", e.Message + " " + e.StackTrace);
 				return false;
 			}
 		}
 
-		public bool RequestUserRegister(string _id, string _pw, string _name, ref string message)
+		private bool RequestUserRegister(string _id, string _pw, string _uuid, ref string message)
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
-				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
-				if (userSearchReader.Read())
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken)
 				{
-					message = "존재하는 ID입니다";
-					userSearchReader.Close();
-					return false;
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
 				}
-				userSearchReader.Close();
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRegister", $"SELECT * FROM `user` WHERE `user_id` = '{_id}'");
+				using (MySqlDataReader dataReader = userSearchCommand.ExecuteReader())
+				{
+					if (dataReader.Read()) {
+                    	message = "존재하는 ID입니다";
+                    	dataReader.Close();
+                    	return false;
+                    }
+                    dataReader.Close();
+				}
 				string passwordHash = BCrypt.Net.BCrypt.HashPassword(_pw);
-				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `user` (`user_id`, `user_pw`) VALUES ('{_id}', '{passwordHash}')", dbConnection);
+				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `user` (`user_id`, `user_pw`, `user_uuid`) VALUES ('{_id}', '{passwordHash}', {_uuid})", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRegister", $"INSERT INTO `user` (`user_id`, `user_pw`, `user_uuid`) VALUES ('{_id}', '{passwordHash}', {_uuid})");
 				int inserted = userInsertCommand.ExecuteNonQuery();
 				if (inserted != 1)
 				{
 					message = "가입되지 않았습니다";
 					return false;
 				}
-
-				totalUser++;
+				
+				RefreshUserCount();
 				return true;
 			}
 			catch (Exception e)
 			{
-				message = "DB 문제가 발생하였습니다 : " + e.Message;
+				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRegister", e.Message + " " + e.StackTrace);
 				return false;
 			}
 		}
 
+		// ReSharper disable once RedundantAssignment
 		public bool RequestUserStatus(string _id, out NetworkData.UserData _userData, ref string message)
 		{
 			try
 			{
-				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
-				MySqlDataReader userSearchReader = userSearchCommand.ExecuteReader();
-				if (userSearchReader.Read())
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken)
 				{
-					int user_index = Int32.Parse(userSearchReader[0].ToString());
-					string user_id = userSearchReader[1].ToString();
-					string user_pw = userSearchReader[2].ToString();
-					string user_nick = userSearchReader[3].ToString();
-					int user_cash = Int32.Parse(userSearchReader[4].ToString());
-					int user_money = Int32.Parse(userSearchReader[5].ToString());
-					userSearchReader.Close();
-					NetworkData.UserData user = new NetworkData.UserData(user_index, user_id, user_nick);
-					user.userCash = user_cash;
-					user.userMoney = user_money;
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
+				}
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_id` = '{_id}'", dbConnection);
+				using MySqlDataReader dataReader = userSearchCommand.ExecuteReader();
+				if (dataReader.Read())
+				{
+					int user_index = dataReader.GetInt32(dataReader.GetOrdinal("user_index"));
+					string user_id = dataReader.GetString(dataReader.GetOrdinal("user_id"));
+					string user_nick = dataReader.GetString(dataReader.GetOrdinal("user_nick"));
+					int user_cash = dataReader.GetInt32(dataReader.GetOrdinal("user_cash"));
+					int user_money = dataReader.GetInt32(dataReader.GetOrdinal("user_money"));
+					int user_rank = dataReader.GetInt32(dataReader.GetOrdinal("user_rank"));
+					dataReader.Close();
+					NetworkData.UserData user = new NetworkData.UserData(user_index, user_id, user_nick)
+					{
+						userCash = user_cash, userMoney = user_money, userRank = user_rank
+					};
 					_userData = user;
 					message = "";
 					return true;
 				}
 				else
 				{
-					userSearchReader.Close();
+					dataReader.Close();
 					_userData = null;
 					message = "일치하는 유저가 없습니다";
 					return false;

@@ -121,9 +121,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Assets\MSBC2C_common.cs" />
-    <Compile Include="Assets\MSBC2C_proxy.cs" />
-    <Compile Include="Assets\MSBC2C_stub.cs" />
     <Compile Include="Assets\MSBC2S_common.cs" />
     <Compile Include="Assets\MSBC2S_proxy.cs" />
     <Compile Include="Assets\MSBC2S_stub.cs" />
@@ -152,6 +149,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ServerManager.GameRoom.cs" />
+    <Compile Include="ServerManager.NetworkGate.cs" />
     <Compile Include="StatusManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

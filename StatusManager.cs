@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Threading;
 using System.Net.NetworkInformation;
@@ -14,19 +11,17 @@ namespace MSB_SERVER
     {
 		private static StatusManager INSTANCE = new StatusManager();
 
-		private readonly MSB_SERVER.App serverApplication;
+		private readonly App serverApplication;
 
 		private Thread pingThread;
 		private Thread uptimeThread;
 		private Thread environmentThread;
 
-		private bool MODULE_STOP_FLAG = false;
-
-		public object PerformanceInfo { get; private set; }
+		private bool MODULE_STOP_FLAG;
 
 		private StatusManager()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
+			serverApplication = (App) Application.Current;
 		}
 
 		public static StatusManager GetInstance()
@@ -53,7 +48,7 @@ namespace MSB_SERVER
 			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "StatusManager", "PING 스레드 시작");
 			if (pingThread == null || !pingThread.IsAlive)
 			{
-                pingThread = new Thread(new ThreadStart(DoPing))
+                pingThread = new Thread(DoPing)
                 {
                     Priority = ThreadPriority.Lowest
                 };
@@ -75,7 +70,6 @@ namespace MSB_SERVER
 			string pingString = "12345678901234567890123456789012";
 			byte[] pingBuffer = Encoding.ASCII.GetBytes(pingString);
 			int pingTimeOut = 1000;
-			long pingRTT = 0;
 			string resultString;
 
 			while (true)
@@ -87,9 +81,8 @@ namespace MSB_SERVER
 				try
 				{
 					pingReply = pingSender.Send("google.co.kr", pingTimeOut, pingBuffer, pingOptions);
-					if (pingReply.Status == IPStatus.Success)
+					if (pingReply != null && pingReply.Status == IPStatus.Success)
 					{
-						pingRTT = pingReply.RoundtripTime;
 						resultString = pingReply.RoundtripTime.ToString() + "ms";
 					}
 					else
@@ -124,7 +117,7 @@ namespace MSB_SERVER
 			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "StatusManager", "UPTIME 스레드 시작");
 			if (uptimeThread == null || !uptimeThread.IsAlive)
 			{
-                uptimeThread = new Thread(new ThreadStart(DoUptime))
+                uptimeThread = new Thread(DoUptime)
                 {
                     Priority = ThreadPriority.Lowest
                 };
@@ -174,7 +167,7 @@ namespace MSB_SERVER
 			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "StatusManager", "ENV 스레드 시작");
 			if (environmentThread == null || !environmentThread.IsAlive)
 			{
-				environmentThread = new Thread(new ThreadStart(DoEnvironment));
+				environmentThread = new Thread(DoEnvironment);
 			}
 			else if (environmentThread.IsAlive)
 			{
@@ -185,13 +178,13 @@ namespace MSB_SERVER
 
 		private void DoEnvironment()
 		{
-			bool envCpuDanger = false;
-			bool envRamDanger = false;
-			string envCpuString = String.Empty;
-			string envRamString = String.Empty;
+			bool envCpuDanger;
+			bool envRamDanger;
+			string envCpuString;
+			string envRamString;
 			PerformanceCounter envCpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName);
-			float envCpuUsage = 0;
-			float envRamUsage = 0;
+			float envCpuUsage;
+			float envRamUsage;
 
 			while (true)
 			{
@@ -202,11 +195,12 @@ namespace MSB_SERVER
 				try
 				{
 					envCpuUsage = envCpuCounter.NextValue();
+					// ReSharper disable once PossibleLossOfFraction
 					envRamUsage = GC.GetTotalMemory(true) / 1024;
 					envCpuDanger = envCpuUsage > 100;
 					envRamDanger = envRamUsage > 100000;
-					envCpuString = String.Format("{0:0.00}%", envCpuUsage);
-					envRamString = String.Format("{0:0}KB", envRamUsage);
+					envCpuString = string.Format("{0:0.00}%", envCpuUsage);
+					envRamString = string.Format("{0:0}KB", envRamUsage);
 					serverApplication.graphicalManager.OnCpuStatusChanged(true, true, envCpuDanger, envCpuString);
 					serverApplication.graphicalManager.OnRamStatusChanged(true, true, envRamDanger, envRamString);
 					Thread.Sleep(1000);

@@ -1,31 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.ComponentModel;
 
 namespace MSB_SERVER
 {
-	public partial class MainWindow : Window
+	public partial class MainWindow
 	{
-		private MSB_SERVER.App serverApplication;
+		private App serverApplication;
 
 		private bool WINDOW_STATE_MAXIMIZED;
 
 		public MainWindow()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
-			this.Closing += OnWindowClosing;
+			serverApplication = (App) Application.Current;
+			Closing += OnWindowClosing;
 			InitializeComponent();
 			InitializeTitleBar();
 		}
@@ -33,7 +23,7 @@ namespace MSB_SERVER
 		private void InitializeTitleBar()
 		{
 			WINDOW_STATE_MAXIMIZED = false;
-			titleBar.MouseDown += new MouseButtonEventHandler(OnTitleBarMouseDown);
+			titleBar.MouseDown += OnTitleBarMouseDown;
 			titleMainIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/icon.png", UriKind.Relative));
 			titleMinIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/title_min.png", UriKind.Relative));
 			titleMaxIcon.Source = new BitmapImage(new Uri(@"/MSB_SERVER;component/Resources/title_max.png", UriKind.Relative));
@@ -45,7 +35,7 @@ namespace MSB_SERVER
 
 		private void OnTitleMinClicked(object sender, RoutedEventArgs e)
 		{
-			this.WindowState = WindowState.Minimized;
+			WindowState = WindowState.Minimized;
 		}
 		
 		private void OnTitleMinClickedM(object sender, MouseEventArgs e)
@@ -57,11 +47,11 @@ namespace MSB_SERVER
 		{
 			if (WINDOW_STATE_MAXIMIZED)
 			{
-				this.WindowState = WindowState.Normal;
+				WindowState = WindowState.Normal;
 				WINDOW_STATE_MAXIMIZED = false;
 			} else
 			{
-				this.WindowState = WindowState.Maximized;
+				WindowState = WindowState.Maximized;
 				WINDOW_STATE_MAXIMIZED = true;
 			}
 		}
@@ -83,7 +73,7 @@ namespace MSB_SERVER
 
 		private void OnTitleBarMouseDown(object sender, MouseButtonEventArgs e)
 		{
-			this.DragMove();
+			DragMove();
 		}
 
 		private void OnServerButtonClicked(object sender, RoutedEventArgs e)
@@ -96,7 +86,7 @@ namespace MSB_SERVER
 				{
 					SERVER_IP = mainEditorIP.GetLineText(0).Trim();
 				}
-				SERVER_PORT = Int32.Parse(mainEditorPort.GetLineText(0).Trim());
+				SERVER_PORT = int.Parse(mainEditorPort.GetLineText(0).Trim());
 			} catch { }
 			serverApplication.graphicalManager.OnUserServerButton(SERVER_IP, SERVER_PORT);
 		}
@@ -106,7 +96,7 @@ namespace MSB_SERVER
 			if (e.Key == Key.Return)
 			{
 				string inputCommand = mainEditorCommand.GetLineText(0).Trim();
-				if (!String.IsNullOrEmpty(inputCommand))
+				if (!string.IsNullOrEmpty(inputCommand))
 				{
 					serverApplication.commandManager.ApplyCommand(inputCommand);
 					mainEditorCommand.Clear();
@@ -121,7 +111,7 @@ namespace MSB_SERVER
 				serverApplication.networkManager.ServerStop();
 			}
 			catch { }
-			System.Windows.Application.Current.Shutdown();
+			Application.Current.Shutdown();
 		}
 	}
 }

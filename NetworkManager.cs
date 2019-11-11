@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using Nettention.Proud;
 
 namespace MSB_SERVER
@@ -15,7 +11,7 @@ namespace MSB_SERVER
 	{
 		private static NetworkManager INSTANCE;
 
-		private static MSB_SERVER.App serverApplication;
+		private static App serverApplication;
 
 		private static bool IS_SERVER_RUNNING;
 
@@ -25,8 +21,8 @@ namespace MSB_SERVER
 		private int SERVER_PORT;
 
         private NetServer networkServer;
-        private Nettention.Proud.ThreadPool netWorkerThreadPool = new Nettention.Proud.ThreadPool(4);
-        private Nettention.Proud.ThreadPool userWorkerThreadPool = new Nettention.Proud.ThreadPool(4);
+        private ThreadPool netWorkerThreadPool = new ThreadPool(4);
+        private ThreadPool userWorkerThreadPool = new ThreadPool(4);
         private System.Guid guidVersion = new System.Guid("{0x27ad1634,0x381e,0x4228,{0x98,0xa,0xda,0xc8,0xeb,0x5f,0x4e,0x83}}");
 
         internal MSBS2C.Proxy netS2CProxy = new MSBS2C.Proxy();
@@ -34,7 +30,7 @@ namespace MSB_SERVER
 
 		private NetworkManager()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
+			serverApplication = (App) Application.Current;
 			IS_SERVER_RUNNING = false;
 		}
 
@@ -62,77 +58,78 @@ namespace MSB_SERVER
 
                 if (_SERVER_IP.Equals("localhost"))
                 {
-                    SERVER_IP = System.Net.IPAddress.Parse("127.0.0.1");
+                    SERVER_IP = IPAddress.Parse("127.0.0.1");
                 }
                 else
                 {
-                    SERVER_IP = System.Net.IPAddress.Parse(_SERVER_IP);
+                    SERVER_IP = IPAddress.Parse(_SERVER_IP);
                 }
 
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "서버 시작 [" + SERVER_IP + ":" + SERVER_PORT + "]");
 
+                // ReSharper disable once RedundantCheckBeforeAssignment
                 if (networkServer != null)
                 {
-                    //networkServer.Dispose();
                     networkServer = null;
                 }
                 networkServer = new NetServer();
                 networkServer.AttachStub(netC2SStub);
                 networkServer.AttachProxy(netS2CProxy);
 
-                networkServer.ConnectionRequestHandler = (AddrPort clientAddr, ByteArray userData, ByteArray reply) =>
+                // ReSharper disable once RedundantAssignment
+                networkServer.ConnectionRequestHandler = (clientAddr, userData, reply) =>
                 {
                     reply = new ByteArray();
                     reply.Clear();
                     return true;
                 };
 
-                networkServer.ClientHackSuspectedHandler = (HostID clientID, HackType hackType) =>
+                networkServer.ClientHackSuspectedHandler = (clientID, hackType) =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Client Hack Suspected : " + clientID + ":" + hackType + "");
                 };
 
-                networkServer.ClientJoinHandler = (NetClientInfo clientInfo) =>
+                networkServer.ClientJoinHandler = clientInfo =>
                 {
                     serverApplication.serverManager.OnUserConnected(clientInfo.hostID);
                 };
 
-                networkServer.ClientLeaveHandler = (NetClientInfo clientInfo, ErrorInfo errorInfo, ByteArray comment) =>
+                networkServer.ClientLeaveHandler = (clientInfo, errorInfo, comment) =>
                 {
                     serverApplication.serverManager.OnUserDisconnected(clientInfo.hostID);
                 };
 
-                networkServer.ErrorHandler = (ErrorInfo errorInfo) =>
+                networkServer.ErrorHandler = errorInfo =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Error : " + errorInfo);
                 };
 
-                networkServer.WarningHandler = (ErrorInfo errorInfo) =>
+                networkServer.WarningHandler = errorInfo =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Warning : " + errorInfo);
                 };
 
-                networkServer.ExceptionHandler = (Exception e) =>
+                networkServer.ExceptionHandler = e =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Exception : " + e);
                 };
 
-                networkServer.InformationHandler = (ErrorInfo errorInfo) =>
+                networkServer.InformationHandler = errorInfo =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Information : " + errorInfo);
                 };
 
-                networkServer.NoRmiProcessedHandler = (RmiID rmiID) =>
+                networkServer.NoRmiProcessedHandler = rmiID =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "NoRmiProcessed : " + rmiID);
                 };
 
-                networkServer.P2PGroupJoinMemberAckCompleteHandler = (HostID groupHostID, HostID memberHostID, ErrorType result) =>
+                networkServer.P2PGroupJoinMemberAckCompleteHandler = (groupHostID, memberHostID, result) =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "P2P Group Complete : " + groupHostID);
                 };
 
-                networkServer.TickHandler = (object context) =>
+                networkServer.TickHandler = context =>
                 {
                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "NetworkManager", "Tick : " + context);
                 };
@@ -173,7 +170,7 @@ namespace MSB_SERVER
                 serverApplication.statusManager.StartModules();
             } catch (Exception e)
             {
-                ((MSB_SERVER.App) Application.Current).MSBUnhandledException(e, "NetworkManager");
+                ((App) Application.Current).MSBUnhandledException(e, "NetworkManager");
                 ServerStop();
             }
 		}
@@ -197,11 +194,9 @@ namespace MSB_SERVER
         private void InitializeListeners()
         {
             netC2SStub.OnLoginRequest = OnUserLogin;
-            netC2SStub.OnRegisterRequest = OnUserRegister;
             netC2SStub.OnStatusRequest = OnUserStatus;
-            netC2SStub.OnSoloQueueRequest = OnSoloQueue;
-            netC2SStub.OnTeamQueueRequest = OnTeamQueue;
-            netC2SStub.OnQuitQueueRequest = OnQuitQueue;
+            netC2SStub.OnSystemRequest = OnSystemRequest;
+            netC2SStub.OnGameQueueRequest = OnGameQueue;
             netC2SStub.OnGameInfoRequest = OnGameInfo;
             netC2SStub.OnGameActionReady = OnGameUserActionReady;
             netC2SStub.OnGameActionDamage = OnGameUserActionDamage;
@@ -210,13 +205,13 @@ namespace MSB_SERVER
             netC2SStub.OnGameUserMove = OnGameUserMove;
             netC2SStub.OnGameUserSync = OnGameUserSync;
         }
-
-        private bool OnUserLogin(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, String id, String pw)
+        
+        private static bool OnUserLogin(HostID remote, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserLogin");
-                serverApplication.serverManager.OnUserLogin(remote, id, pw);
+                ServerManager.NetworkGate.EventUserLogin(remote, _data);
             }
             catch (Exception e)
             {
@@ -226,27 +221,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnUserRegister(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, String id, String pw, String nick)
-        {
-            try
-            {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserRegister");
-                serverApplication.serverManager.OnUserRegister(remote, id, pw, nick);
-            }
-            catch (Exception e)
-            {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserRegister ERROR");
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", e.ToString());
-            }
-            return true;
-        }
-
-        private bool OnUserStatus(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, String id)
+        private static bool OnUserStatus(HostID remote, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserStatus");
-                serverApplication.serverManager.OnUserStatus(remote, id);
+                ServerManager.NetworkGate.EventUserStatus(remote, _data);
             }
             catch (Exception e)
             {
@@ -256,57 +236,42 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnSoloQueue(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int weapon, int skin)
+        private static bool OnSystemRequest(HostID remote, RmiContext rmiContext, string _data)
         {
             try
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnSoloQueue");
-                serverApplication.serverManager.OnSoloQueue(remote, weapon, skin);
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnSystemRequest");
+                ServerManager.NetworkGate.EventUserSystem(remote, _data);
             }
             catch (Exception e)
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnSoloQueue ERROR");
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnSystemRequest ERROR");
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", e.ToString());
             }
             return true;
         }
 
-        private bool OnTeamQueue(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int weapon, int skin)
+        private static bool OnGameQueue(HostID remote, RmiContext rmiContext, string _data)
         {
             try
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnTeamQueue");
-                serverApplication.serverManager.OnTeamQueue(remote, weapon, skin);
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameQueue");
+                ServerManager.NetworkGate.EventGameQueue(remote, _data);
             }
             catch (Exception e)
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnTeamQueue ERROR");
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameQueue ERROR");
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", e.ToString());
             }
             return true;
         }
 
-        private bool OnQuitQueue(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext)
-        {
-            try
-            {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnQuitQueue");
-                serverApplication.serverManager.OnQuitQueue(remote);
-            }
-            catch (Exception e)
-            {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnQuitQueue ERROR");
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", e.ToString());
-            }
-            return true;
-        }
-
-        private bool OnGameInfo(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int room)
+        private static bool OnGameInfo(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameInfo");
-                serverApplication.serverManager.OnGameInfo(remote, room);
+                ServerManager.NetworkGate.EventGameInfo(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -316,12 +281,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserActionReady(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int room)
+        private static bool OnGameUserActionReady(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionReady");
-                serverApplication.serverManager.OnGameUserActionReady(remote, room);
+                ServerManager.NetworkGate.EventGameActionReady(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -331,12 +296,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserActionDamage(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int room, int num, int amount, String option)
+        private static bool OnGameUserActionDamage(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionDamage");
-                serverApplication.serverManager.OnGameUserActionDamage(remote, room, num, amount, option);
+                ServerManager.NetworkGate.EventGameActionDamage(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -346,12 +311,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserActionObject(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int room, int num, int amount)
+        private static bool OnGameUserActionObject(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionObject");
-                serverApplication.serverManager.OnGameUserActionObject(remote, room, num, amount);
+                ServerManager.NetworkGate.EventGameActionObject(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -361,12 +326,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserActionItem(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int room, int type, int num)
+        private static bool OnGameUserActionItem(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionItem");
-                serverApplication.serverManager.OnGameUserActionItem(remote, room, type, num);
+                ServerManager.NetworkGate.EventGameActionItem(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -376,12 +341,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserMove(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int gameRoom, string data)
+        private static bool OnGameUserMove(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserMove");
-                serverApplication.serverManager.OnGameUserMove(remote, gameRoom, data);
+                ServerManager.NetworkGate.EventGameUserMove(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -391,12 +356,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private bool OnGameUserSync(Nettention.Proud.HostID remote, Nettention.Proud.RmiContext rmiContext, int gameRoom, string data)
+        private static bool OnGameUserSync(HostID remote, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserSync");
-                serverApplication.serverManager.OnGameUserSync(remote, gameRoom, data);
+                ServerManager.NetworkGate.EventGameUserSync(remote, _room, _data);
             }
             catch (Exception e)
             {
@@ -406,7 +371,7 @@ namespace MSB_SERVER
             return true;
         }
 
-        public bool IsServerRunning()
+        public static bool IsServerRunning()
 		{
 			return IS_SERVER_RUNNING;
 		}

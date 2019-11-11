@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -12,7 +10,7 @@ namespace MSB_SERVER
     {
 		private static LogManager INSTANCE;
 
-		private MSB_SERVER.App serverApplication;
+		private App serverApplication;
 
 		private TextBox mainSystemLogBox;
 		private TextBox mainSystemErrorLogBox;
@@ -48,7 +46,7 @@ namespace MSB_SERVER
 
 		private LogManager()
 		{
-			serverApplication = (MSB_SERVER.App) Application.Current;
+			serverApplication = (App) Application.Current;
 			if (logList == null)
 			{
 				logList = new LinkedList<LogObject>();
@@ -157,9 +155,9 @@ namespace MSB_SERVER
 			logObject.message = message;
 			logObject.datetime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff");
 			logList.AddLast(logObject);
-            serverApplication.Dispatcher.Invoke(new Action(() => {
-                SyncLogBox();
-            }));
+            serverApplication.Dispatcher?.Invoke(() => {
+	            SyncLogBox();
+            });
 		}
 
 		public void SyncLogBox()
@@ -172,7 +170,7 @@ namespace MSB_SERVER
 			{
 				return;
 			}
-			string printString = String.Empty;
+			string printString = string.Empty;
 
 			LogObject log = logList.Last();
 

@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Net;
-using Newtonsoft.Json.Linq;
-using Nettention.Proud;
+﻿using Nettention.Proud;
 
 namespace MSB_SERVER
 {
@@ -27,14 +17,14 @@ namespace MSB_SERVER
 
 			public UserData(int _userNUM, string _userID, string _userNICK)
 			{
-				this.userNumber = _userNUM;
-				this.userID = _userID;
-				this.userNick = _userNICK;
-				this.userRank = 0;
-				this.userMoney = 0;
-				this.userCash = 0;
-				this.userWeapon = 0;
-				this.userSkin = 0;
+				userNumber = _userNUM;
+				userID = _userID;
+				userNick = _userNICK;
+				userRank = 0;
+				userMoney = 0;
+				userCash = 0;
+				userWeapon = 0;
+				userSkin = 0;
 			}
 		}
 
