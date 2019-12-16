@@ -67,8 +67,7 @@ namespace MSB_SERVER
 
             public static void OnGameStatusReady(HostID hostID, string readyData)
             {
-                JObject data = new JObject{{"readyData", readyData}};
-                serverApplication.networkManager.netS2CProxy.OnGameStatusReady(hostID, RmiContext.ReliableSend, data.ToString());
+                serverApplication.networkManager.netS2CProxy.OnGameStatusReady(hostID, RmiContext.ReliableSend, readyData);
             }
 
             public static void OnGameStatusScore(HostID hostID, int blueKill, int blueDeath, int bluePoint, int redKill, int redDeath, int redPoint)
@@ -107,10 +106,11 @@ namespace MSB_SERVER
                 serverApplication.networkManager.netS2CProxy.OnGameEventItem(hostID, RmiContext.ReliableSend, data.ToString());
             }
 
-            public static void OnGameEventKill(HostID hostID, int from, int to, string action)
+            public static void OnGameEventKill(HostID hostID, int from, int to, string option)
             {
-                JObject data = new JObject {{"from", from}, {"to", to}, {"action", action}};
+                JObject data = new JObject {{"from", from}, {"to", to}, {"option", option}};
                 serverApplication.networkManager.netS2CProxy.OnGameEventKill(hostID, RmiContext.ReliableSend, data.ToString());
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G] KILL : " + data);
             }
 
             public static void OnGameEventRespawn(HostID hostID, int num, int time)

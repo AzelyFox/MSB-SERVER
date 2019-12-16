@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Newtonsoft.Json.Linq;
 
@@ -18,13 +19,14 @@ namespace MSB_SERVER
                 STATE_READY, STATE_INGAME, STATE_END, STATE_CLEAR
             }
             public int gameNumber;
-            public GAME_TYPE gameType;
+            public int gameDatabaseIndex = 0;
+            public readonly GAME_TYPE gameType;
             public GAME_STATE gameState;
             public List<NetworkData.ClientData> clientList;
             public List<NetworkData.ClientData> clientBlueList;
             public List<NetworkData.ClientData> clientRedList;
-            public Thread gameThread;
-            public Thread readyCheckThread;
+            Thread gameThread;
+            Thread readyCheckThread;
 
             public static int gameTime = 60;
             public static int gameHealPackValue = 30;
@@ -33,15 +35,18 @@ namespace MSB_SERVER
             public static int gameObjectHealth = 10;
             public static int gamePointValue = 1;
             public static int gamePointSpawn = 15;
+            public static int gameMatchValue = 40;
             public int gameBlueKill;
             public int gameBlueDeath;
-            public int gameBlueScore;
+            public int gameBluePoint;
+            public int gameBlueTotal;
             public int gameRedKill;
             public int gameRedDeath;
-            public int gameRedScore;
-            public int[] gameObjects = { gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth };
-            public int[] gameHealPacks = { 1, 1, 1 };
-            public int[] gamePointPacks = { 1, 1, 1 };
+            public int gameRedPoint;
+            public int gameRedTotal;
+            int[] gameObjects = { gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth, gameObjectHealth };
+            int[] gameHealPacks = { 1, 1, 1 };
+            int[] gamePointPacks = { 1, 1, 1 };
 
             public GameRoom(int number, GAME_TYPE type, GAME_STATE state)
             {
@@ -93,6 +98,28 @@ namespace MSB_SERVER
 
                 if (isEveryPlayerReady && gameThread == null)
                 {
+                    foreach (NetworkData.ClientData clientData in clientList)
+                    {
+                        clientData.currentReady = true;
+                        clientData.gameRespawn = 0;
+                        clientData.gameHealth = 100;
+                        clientData.gameKill = 0;
+                        clientData.gameDeath = 0;
+                        clientData.gameBonus = 0;
+                        clientData.enduredDamage = 0;
+                        clientData.lastKillTime = 0;
+                        clientData.stunTime = 0;
+                        clientData.stunGivenClient = null;
+                        clientData.totalGivenDamage = 0;
+                        clientData.totalTakenDamage = 0;
+                        clientData.killHistory?.Clear();
+                        clientData.killStreakHistory?.Clear();
+                        clientData.assistHistory?.Clear();
+                        clientData.medalHistory?.Clear();
+                    }
+                    
+                    gameDatabaseIndex = DatabaseManager.GetInstance().saveGameStart(this);
+                    
                     gameThread = new Thread(DoGameStart);
                     gameThread.Start();
                 }
@@ -103,6 +130,8 @@ namespace MSB_SERVER
                 try
                 {
                     if (gameState != GAME_STATE.STATE_INGAME) return;
+                    
+                    long currentTimeStamp = (long) (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds;
 
                     NetworkData.ClientData targetClient = null;
                     foreach (NetworkData.ClientData clientData in clientList)
@@ -119,6 +148,9 @@ namespace MSB_SERVER
                         dataAmount = targetClient.gameHealth;
                     }
                     targetClient.gameHealth -= dataAmount;
+                    targetClient.enduredDamage += dataAmount;
+                    userClient.totalGivenDamage += dataAmount;
+                    targetClient.totalTakenDamage += dataAmount;
 
                     foreach (NetworkData.ClientData clientData in clientList)
                     {
@@ -128,20 +160,29 @@ namespace MSB_SERVER
 
                     if (targetClient.gameHealth <= 0)
                     {
-                        foreach (NetworkData.ClientData clientData in clientList)
+                        if (userClient != targetClient)
                         {
-                            NetworkGate.OnGameEventKill(clientData.clientHID, userClient.clientUser.userNumber, targetClient.clientUser.userNumber, dataOption);
-                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 0, userClient.clientUser.userNick + "KILLED " + targetClient.clientUser.userNick);
+                            userClient.gameKill++;
+                            userClient.lastKillTime = currentTimeStamp;
+                            userClient.killHistory.Add(targetClient);
+                            userClient.killStreakHistory.Add(targetClient);
+                            userClient.gameBonus++;
                         }
-
-                        if (userClient!= targetClient) userClient.gameKill++;
                         targetClient.gameDeath++;
+                        targetClient.lastKillTime = 0;
+                        targetClient.enduredDamage = 0;
+                        targetClient.killStreakHistory = new List<NetworkData.ClientData>();
+                        targetClient.stunTime = 0;
+                        targetClient.stunGivenClient = null;
+                        targetClient.gameBonus--;
+                        
                         targetClient.gameRespawn = gameUserSpawn;
 
                         gameBlueKill = 0;
                         gameBlueDeath = 0;
                         gameRedKill = 0;
                         gameRedDeath = 0;
+                        
                         foreach (NetworkData.ClientData clientData in clientBlueList)
                         {
                             gameBlueKill += clientData.gameKill;
@@ -152,10 +193,109 @@ namespace MSB_SERVER
                             gameRedKill += clientData.gameKill;
                             gameRedDeath += clientData.gameDeath;
                         }
-
+                        gameBlueTotal = gameBlueKill + gameBluePoint;
+                        gameRedTotal = gameRedKill + gameRedPoint;
+                        
+                        // User Client Killed Target Client Count
+                        int UCKTC = userClient.killHistory.Count(client => client!=null && client == targetClient);
+                        // Target Client Killed User Client Count
+                        int TCKUC = targetClient.killHistory.Count(client => client!=null && client == userClient);
+                        JObject killObject = new JObject();
+                        killObject.Add("killMaker", userClient.clientUser.userNumber);
+                        killObject.Add("killTarget", targetClient.clientUser.userNumber);
+                        killObject.Add("killCount", UCKTC);
+                        killObject.Add("deathCount", TCKUC);
+                        
                         foreach (NetworkData.ClientData clientData in clientList)
                         {
-                            NetworkGate.OnGameStatusScore(clientData.clientHID, gameBlueKill, gameBlueDeath, gameBlueKill * 2 + gameBlueScore, gameRedKill, gameRedDeath, gameRedKill * 2 + gameRedScore);
+                            NetworkGate.OnGameEventKill(clientData.clientHID, userClient.clientUser.userNumber, targetClient.clientUser.userNumber, dataOption);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 0, userClient.clientUser.userNick + "KILLED " + targetClient.clientUser.userNick);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 1, killObject.ToString());
+                        }
+                        
+                        // CHECK MEDAL - FIRST KILL
+                        int gameTotalKill = 0;
+                        if (userClient != targetClient)
+                        {
+                            foreach (NetworkData.ClientData clientData in clientList)
+                            {
+                                gameTotalKill += clientData.gameKill;
+                            }
+                            if (gameTotalKill == 0)
+                            {
+                                // ACHIEVE userClient FIRST KILL MEDAL
+                                userClient.gameBonus++;
+                                int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, userClient.clientUser.userNumber, 1);
+                                userClient.medalHistory.Add(medalIndex);
+                                NetworkGate.OnGameStatusMessage(userClient.clientHID, 2, "1");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] FIRST KILL : " + userClient.clientUser.userID);
+                            }
+                        }
+
+                        // CHECK MEDAL - TIT FOR TAT
+                        if (userClient != targetClient && targetClient.gameKill > 0)
+                        {
+                            if (targetClient.killStreakHistory != null && targetClient.killStreakHistory.Count > 0 &&
+                                targetClient.killStreakHistory.Contains(userClient))
+                            {
+                                // ACHIEVE userClient TIT FOR TAT
+                                userClient.gameBonus++;
+                                int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, userClient.clientUser.userNumber, 3);
+                                userClient.medalHistory.Add(medalIndex);
+                                NetworkGate.OnGameStatusMessage(userClient.clientHID, 2, "3");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] TIT FOR TAT : " + userClient.clientUser.userID);
+                            }
+                        }
+                        
+                        // CHECK MEDAL - KILL STREAK
+                        if (userClient != targetClient && userClient.killStreakHistory != null && userClient.killStreakHistory.Count > 0)
+                        {
+                            if (userClient.lastKillTime + 5 > currentTimeStamp)
+                            {
+                                // ACHIEVE userClient KILL STREAK
+                                userClient.gameBonus++;
+                                int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, userClient.clientUser.userNumber, 2);
+                                userClient.medalHistory.Add(medalIndex);
+                                NetworkGate.OnGameStatusMessage(userClient.clientHID, 2, "2");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] KILL STREAK : " + userClient.clientUser.userID);
+                            }
+                        }
+                        
+                        // CHECK MEDAL - ASSIST
+                        if (userClient != targetClient && targetClient.stunTime > 0 && targetClient.stunGivenClient != null && targetClient.stunGivenClient != userClient)
+                        {
+                            foreach (NetworkData.ClientData clientData in clientList)
+                            {
+                                if (clientData.Equals(targetClient.stunGivenClient))
+                                {
+                                    // ACHIEVE clientData ASSIST
+                                    userClient.gameBonus++;
+                                    clientData.assistHistory.Add(targetClient);
+                                    int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 6);
+                                    clientData.medalHistory.Add(medalIndex);
+                                    NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "6");
+                                    serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ASSIST : " + clientData.clientUser.userID);
+                                }
+                            }
+                        }
+                        
+                        foreach (NetworkData.ClientData clientData in clientList)
+                        {
+                            NetworkGate.OnGameStatusScore(clientData.clientHID, gameBlueKill, gameBlueDeath, gameBlueTotal, gameRedKill, gameRedDeath, gameRedTotal);
+                        }
+                    }
+                    else
+                    {
+                        // CHECK MEDAL - ADAMANT
+                        if (targetClient.enduredDamage >= 200)
+                        {
+                            // ACHIEVE targetClient ADAMANT
+                            targetClient.gameBonus++;
+                            targetClient.enduredDamage -= 200;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, targetClient.clientUser.userNumber, 4);
+                            targetClient.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(targetClient.clientHID, 2, "4");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ADAMANT : " + targetClient.clientUser.userID);
                         }
                     }
                 } catch (Exception e)
@@ -201,11 +341,13 @@ namespace MSB_SERVER
                         if (dataTarget >= gamePointPacks.Length) return;
                         if (gamePointPacks[dataTarget] > 0) return;
 
+                        userClient.gameBonus++;
+
                         foreach (NetworkData.ClientData clientData in clientBlueList)
                         {
                             if (userClient.clientUser.userNumber == clientData.clientUser.userNumber)
                             {
-                                gameBlueScore += gamePointValue;
+                                gameBluePoint += gamePointValue;
                                 break;
                             }
                         }
@@ -213,15 +355,18 @@ namespace MSB_SERVER
                         {
                             if (userClient.clientUser.userNumber == clientData.clientUser.userNumber)
                             {
-                                gameRedScore += gamePointValue;
+                                gameRedPoint += gamePointValue;
                                 break;
                             }
                         }
 
+                        gameBlueTotal = gameBlueKill + gameBluePoint;
+                        gameRedTotal = gameRedKill + gameRedPoint;
+                        
                         foreach (NetworkData.ClientData clientData in clientList)
                         {
                             NetworkGate.OnGameEventItem(clientData.clientHID, type, dataTarget, userClient.clientUser.userNumber);
-                            NetworkGate.OnGameStatusScore(clientData.clientHID, gameBlueKill, gameBlueDeath, gameBlueKill * 2 + gameBlueScore, gameRedKill, gameRedDeath, gameRedKill * 2 + gameRedScore);
+                            NetworkGate.OnGameStatusScore(clientData.clientHID, gameBlueKill, gameBlueDeath, gameBlueTotal, gameRedKill, gameRedDeath, gameRedTotal);
                         }
 
                         gamePointPacks[dataTarget] = gamePointSpawn;
@@ -367,6 +512,182 @@ namespace MSB_SERVER
             private void DoGameEnd()
             {
                 gameState = GAME_STATE.STATE_END;
+
+                int gameTotalDamage = 0;
+                foreach (NetworkData.ClientData clientData in clientList)
+                {
+                    gameTotalDamage += clientData.totalGivenDamage;
+                }
+                
+                // CHECK MEDAL - IM NOT MAD
+                foreach (NetworkData.ClientData clientData in clientList)
+                {
+                    if (clientData.gameKill == 0)
+                    {
+                        // ACHIEVE clientData IM NOT MAD
+                        int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 5);
+                        clientData.medalHistory.Add(medalIndex);
+                        NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "5");
+                        serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] IM NOT MAD : " + clientData.clientUser.userID);
+                    }
+                }
+                
+                // CHECK MEDAL - ATTACK MEDAL
+                foreach (NetworkData.ClientData clientData in clientList)
+                {
+                    if (gameType == GAME_TYPE.TYPE_SOLO)
+                    {
+                        if (clientData.totalGivenDamage >= gameTotalDamage/10 * 8)
+                        {
+                            // ACHIEVE clientData ATTACK GOLD
+                            clientData.gameBonus += 4;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 9);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "9");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK GOLD : " + clientData.clientUser.userID);
+                        } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 7)
+                        {
+                            // ACHIEVE clientData ATTACK SILVER
+                            clientData.gameBonus += 3;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 8);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "8");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK SILVER : " + clientData.clientUser.userID);
+                        } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 6)
+                        {
+                            // ACHIEVE clientData ATTACK BRONZE
+                            clientData.gameBonus += 2;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 7);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "7");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK BRONZE : " + clientData.clientUser.userID);
+                        }
+                    }
+                    if (gameType == GAME_TYPE.TYPE_TEAM)
+                    {
+                        if (clientData.totalGivenDamage >= gameTotalDamage/10 * 7)
+                        {
+                            // ACHIEVE clientData ATTACK GOLD
+                            clientData.gameBonus += 4;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 9);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "9");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK GOLD : " + clientData.clientUser.userID);
+                        } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 5)
+                        {
+                            // ACHIEVE clientData ATTACK SILVER
+                            clientData.gameBonus += 3;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 8);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "8");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK SILVER : " + clientData.clientUser.userID);
+                        } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 3)
+                        {
+                            // ACHIEVE clientData ATTACK BRONZE
+                            clientData.gameBonus += 2;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 7);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "7");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] ATTACK BRONZE : " + clientData.clientUser.userID);
+                        }
+                    }
+                }
+                
+                // CHECK MEDAL - DEFENSE MEDAL
+                foreach (NetworkData.ClientData clientData in clientList)
+                {
+                    if (gameType == GAME_TYPE.TYPE_SOLO)
+                    {
+                        if (clientData.totalTakenDamage >= gameTotalDamage/10 * 8)
+                        {
+                            // ACHIEVE clientData DEFENSE GOLD
+                            clientData.gameBonus += 4;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 12);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "12");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE GOLD : " + clientData.clientUser.userID);
+                        } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 7)
+                        {
+                            // ACHIEVE clientData DEFENSE SILVER
+                            clientData.gameBonus += 3;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 11);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "11");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE SILVER : " + clientData.clientUser.userID);
+                        } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 6)
+                        {
+                            // ACHIEVE clientData DEFENSE BRONZE
+                            clientData.gameBonus += 2;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 10);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "10");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE BRONZE : " + clientData.clientUser.userID);
+                        }
+                    }
+                    if (gameType == GAME_TYPE.TYPE_TEAM)
+                    {
+                        if (clientData.totalTakenDamage >= gameTotalDamage/10 * 7)
+                        {
+                            // ACHIEVE clientData DEFENSE GOLD
+                            clientData.gameBonus += 4;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 12);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "12");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE GOLD : " + clientData.clientUser.userID);
+                        } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 5)
+                        {
+                            // ACHIEVE clientData DEFENSE SILVER
+                            clientData.gameBonus += 3;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 11);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "11");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE SILVER : " + clientData.clientUser.userID);
+                        } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 3)
+                        {
+                            // ACHIEVE clientData DEFENSE BRONZE
+                            clientData.gameBonus += 2;
+                            int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 10);
+                            clientData.medalHistory.Add(medalIndex);
+                            NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "10");
+                            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] DEFENSE BRONZE : " + clientData.clientUser.userID);
+                        }
+                    }
+                }
+
+                DatabaseManager.GetInstance().saveGameResult(this);
+                
+                // MM MODIFICATION
+                if (gameBlueTotal == gameRedTotal)
+                {
+                    foreach (NetworkData.ClientData clientData in clientList)
+                    {
+                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus);
+                    }
+                }
+                if (gameBlueTotal > gameRedTotal)
+                {
+                    foreach (NetworkData.ClientData clientData in clientBlueList)
+                    {
+                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus + gameMatchValue);
+                    }
+                    foreach (NetworkData.ClientData clientData in clientRedList)
+                    {
+                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus - gameMatchValue);
+                    }
+                }
+                if (gameBlueTotal < gameRedTotal)
+                {
+                    foreach (NetworkData.ClientData clientData in clientRedList)
+                    {
+                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus + gameMatchValue);
+                    }
+                    foreach (NetworkData.ClientData clientData in clientBlueList)
+                    {
+                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus - gameMatchValue);
+                    }
+                }
+                
+                Thread.Sleep(3000);
 
                 foreach (NetworkData.ClientData clientData in clientList)
                 {

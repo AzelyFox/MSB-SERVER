@@ -665,6 +665,7 @@ namespace MSB_SERVER
                     userArray.Add(clientObject);
                 }
                 NetworkGate.OnGameInfo(client.clientHID, 1, targetRoom.gameNumber, (int) targetRoom.gameType, userArray.ToString());
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameInfo OK");
             }
             catch (Exception e)
             {
