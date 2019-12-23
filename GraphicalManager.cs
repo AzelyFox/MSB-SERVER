@@ -15,10 +15,10 @@ namespace MSB_SERVER
 		private TextBlock mainServerStatus;
 		private Button mainServerButton;
 		private TextBox mainEditorIP, mainEditorPort;
-		private Border mainStatusSoloQueueTitleBlock, mainStatusTeamQueueTitleBlock, mainStatusDatabaseTitleBlock, mainStatusLogTitleBlock, mainStatusUserTitleBlock, mainStatusRoomTitleBlock, mainStatusPingTitleBlock, mainStatusUptimeTitleBlock, mainStatusCpuTitleBlock, mainStatusRamTitleBlock;
-		private TextBlock mainStatusSoloQueueTitle, mainStatusTeamQueueTitle, mainStatusDatabaseTitle, mainStatusLogTitle, mainStatusUserTitle, mainStatusRoomTitle, mainStatusPingTitle, mainStatusUptimeTitle, mainStatusCpuTitle, mainStatusRamTitle;
-		private Border mainStatusSoloQueueBlock, mainStatusTeamQueueBlock, mainStatusDatabaseBlock, mainStatusLogBlock, mainStatusUserBlock, mainStatusRoomBlock, mainStatusPingBlock, mainStatusUptimeBlock, mainStatusCpuBlock, mainStatusRamBlock;
-		private TextBlock mainStatusSoloQueue, mainStatusTeamQueue, mainStatusDatabase, mainStatusLog, mainStatusUser, mainStatusRoom, mainStatusPing, mainStatusUptime, mainStatusCpu, mainStatusRam;
+		private Border mainStatusSoloQueueTitleBlock, mainStatusTeamQueueTitleBlock, mainStatusDatabaseTitleBlock, mainStatusCommandTitleBlock, mainStatusUserTitleBlock, mainStatusRoomTitleBlock, mainStatusPingTitleBlock, mainStatusUptimeTitleBlock, mainStatusCpuTitleBlock, mainStatusRamTitleBlock;
+		private TextBlock mainStatusSoloQueueTitle, mainStatusTeamQueueTitle, mainStatusDatabaseTitle, mainStatusCommandTitle, mainStatusUserTitle, mainStatusRoomTitle, mainStatusPingTitle, mainStatusUptimeTitle, mainStatusCpuTitle, mainStatusRamTitle;
+		private Border mainStatusSoloQueueBlock, mainStatusTeamQueueBlock, mainStatusDatabaseBlock, mainStatusCommandBlock, mainStatusUserBlock, mainStatusRoomBlock, mainStatusPingBlock, mainStatusUptimeBlock, mainStatusCpuBlock, mainStatusRamBlock;
+		private TextBlock mainStatusSoloQueue, mainStatusTeamQueue, mainStatusDatabase, mainStatusCommand, mainStatusUser, mainStatusRoom, mainStatusPing, mainStatusUptime, mainStatusCpu, mainStatusRam;
 		private TextBox mainSystemLogBox, mainNetworkLogBox, mainSystemErrorLogBox, mainNetworkErrorLogBox, mainUserLogBox, mainRoomLogBox;
 		
 		private GraphicalManager()
@@ -56,7 +56,7 @@ namespace MSB_SERVER
 			mainStatusSoloQueueTitleBlock = (Border) mainWindow.FindName("mainStatusSoloQueueTitleBlock");
 			mainStatusTeamQueueTitleBlock = (Border) mainWindow.FindName("mainStatusTeamQueueTitleBlock");
 			mainStatusDatabaseTitleBlock = (Border) mainWindow.FindName("mainStatusDatabaseTitleBlock");
-			mainStatusLogTitleBlock = (Border) mainWindow.FindName("mainStatusLogTitleBlock");
+			mainStatusCommandTitleBlock = (Border) mainWindow.FindName("mainStatusCommandTitleBlock");
 			mainStatusUserTitleBlock = (Border) mainWindow.FindName("mainStatusUserTitleBlock");
 			mainStatusRoomTitleBlock = (Border) mainWindow.FindName("mainStatusRoomTitleBlock");
 			mainStatusPingTitleBlock = (Border) mainWindow.FindName("mainStatusPingTitleBlock");
@@ -66,7 +66,7 @@ namespace MSB_SERVER
 			mainStatusSoloQueueTitle = (TextBlock) mainWindow.FindName("mainStatusSoloQueueTitle");
 			mainStatusTeamQueueTitle = (TextBlock) mainWindow.FindName("mainStatusTeamQueueTitle");
 			mainStatusDatabaseTitle = (TextBlock) mainWindow.FindName("mainStatusDatabaseTitle");
-			mainStatusLogTitle = (TextBlock) mainWindow.FindName("mainStatusLogTitle");
+			mainStatusCommandTitle = (TextBlock) mainWindow.FindName("mainStatusCommandTitle");
 			mainStatusUserTitle = (TextBlock) mainWindow.FindName("mainStatusUserTitle");
 			mainStatusRoomTitle = (TextBlock) mainWindow.FindName("mainStatusRoomTitle");
 			mainStatusPingTitle = (TextBlock) mainWindow.FindName("mainStatusPingTitle");
@@ -76,7 +76,7 @@ namespace MSB_SERVER
 			mainStatusSoloQueueBlock = (Border) mainWindow.FindName("mainStatusSoloQueueBlock");
 			mainStatusTeamQueueBlock = (Border) mainWindow.FindName("mainStatusTeamQueueBlock");
 			mainStatusDatabaseBlock = (Border) mainWindow.FindName("mainStatusDatabaseBlock");
-			mainStatusLogBlock = (Border) mainWindow.FindName("mainStatusLogBlock");
+			mainStatusCommandBlock = (Border) mainWindow.FindName("mainStatusCommandBlock");
 			mainStatusUserBlock = (Border) mainWindow.FindName("mainStatusUserBlock");
 			mainStatusRoomBlock = (Border) mainWindow.FindName("mainStatusRoomBlock");
 			mainStatusPingBlock = (Border) mainWindow.FindName("mainStatusPingBlock");
@@ -86,7 +86,7 @@ namespace MSB_SERVER
 			mainStatusSoloQueue = (TextBlock) mainWindow.FindName("mainStatusSoloQueue");
 			mainStatusTeamQueue = (TextBlock) mainWindow.FindName("mainStatusTeamQueue");
 			mainStatusDatabase = (TextBlock) mainWindow.FindName("mainStatusDatabase");
-			mainStatusLog = (TextBlock) mainWindow.FindName("mainStatusLog");
+			mainStatusCommand = (TextBlock) mainWindow.FindName("mainStatusCommand");
 			mainStatusUser = (TextBlock) mainWindow.FindName("mainStatusUser");
 			mainStatusRoom = (TextBlock) mainWindow.FindName("mainStatusRoom");
 			mainStatusPing = (TextBlock) mainWindow.FindName("mainStatusPing");
@@ -250,33 +250,66 @@ namespace MSB_SERVER
 
 		public void OnLogModuleStatusChanged(bool serverPower, bool isRunning)
 		{
+			/*
             serverApplication.Dispatcher?.Invoke(() => {
 	            if (!serverPower)
 	            {
-		            mainStatusLog.Text = Properties.Resources.ResourceManager.GetString("STATUS_DEFAULT");
-		            mainStatusLog.Foreground = new SolidColorBrush(Colors.Black);
-		            mainStatusLogBlock.Background = new SolidColorBrush(Colors.White);
-		            mainStatusLogTitle.Foreground = new SolidColorBrush(Colors.Black);
-		            mainStatusLogTitleBlock.Background = new SolidColorBrush(Colors.White);
+		            mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_DEFAULT");
+		            mainStatusCommand.Foreground = new SolidColorBrush(Colors.Black);
+		            mainStatusCommandBlock.Background = new SolidColorBrush(Colors.White);
+		            mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.Black);
+		            mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.White);
 		            return;
 	            }
 	            if (isRunning)
 	            {
-		            mainStatusLog.Text = Properties.Resources.ResourceManager.GetString("STATUS_ON");
-		            mainStatusLog.Foreground = new SolidColorBrush(Colors.ForestGreen);
-		            mainStatusLogBlock.Background = new SolidColorBrush(Colors.White);
-		            mainStatusLogTitle.Foreground = new SolidColorBrush(Colors.Black);
-		            mainStatusLogTitleBlock.Background = new SolidColorBrush(Colors.White);
+		            mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_ON");
+		            mainStatusCommand.Foreground = new SolidColorBrush(Colors.ForestGreen);
+		            mainStatusCommandBlock.Background = new SolidColorBrush(Colors.White);
+		            mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.Black);
+		            mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.White);
 	            }
 	            else
 	            {
-		            mainStatusLog.Text = Properties.Resources.ResourceManager.GetString("STATUS_OFF");
-		            mainStatusLog.Foreground = new SolidColorBrush(Colors.White);
-		            mainStatusLogBlock.Background = new SolidColorBrush(Colors.OrangeRed);
-		            mainStatusLogTitle.Foreground = new SolidColorBrush(Colors.White);
-		            mainStatusLogTitleBlock.Background = new SolidColorBrush(Colors.OrangeRed);
+		            mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_OFF");
+		            mainStatusCommand.Foreground = new SolidColorBrush(Colors.White);
+		            mainStatusCommandBlock.Background = new SolidColorBrush(Colors.OrangeRed);
+		            mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.White);
+		            mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.OrangeRed);
 	            }
             });
+            */
+		}
+		
+		public void OnCommandModuleStatusChanged(bool serverPower, bool isRunning)
+		{
+			serverApplication.Dispatcher?.Invoke(() => {
+				if (!serverPower)
+				{
+					mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_DEFAULT");
+					mainStatusCommand.Foreground = new SolidColorBrush(Colors.Black);
+					mainStatusCommandBlock.Background = new SolidColorBrush(Colors.White);
+					mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.Black);
+					mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.White);
+					return;
+				}
+				if (isRunning)
+				{
+					mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_ON");
+					mainStatusCommand.Foreground = new SolidColorBrush(Colors.ForestGreen);
+					mainStatusCommandBlock.Background = new SolidColorBrush(Colors.White);
+					mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.Black);
+					mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.White);
+				}
+				else
+				{
+					mainStatusCommand.Text = Properties.Resources.ResourceManager.GetString("STATUS_OFF");
+					mainStatusCommand.Foreground = new SolidColorBrush(Colors.White);
+					mainStatusCommandBlock.Background = new SolidColorBrush(Colors.OrangeRed);
+					mainStatusCommandTitle.Foreground = new SolidColorBrush(Colors.White);
+					mainStatusCommandTitleBlock.Background = new SolidColorBrush(Colors.OrangeRed);
+				}
+			});
 		}
 
 		public void OnUserCountChanged(bool serverPower, bool isRunning, int userCount, int totalCount)

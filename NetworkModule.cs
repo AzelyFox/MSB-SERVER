@@ -118,7 +118,8 @@ namespace MSBNetwork
             /// 서버에서 시스템 데이터를 받습니다
             /// </summary>
             /// <param name="_result">시스템 성공여부</param>
-            void OnSystemResult(bool _result);
+            /// <param name="_data">시스템 결과 데이터</param>
+            void OnSystemResult(bool _result, string _data);
         }
 
         public interface OnGameMatchedListener
@@ -465,11 +466,12 @@ namespace MSBNetwork
         }
         
         /// <summary>
-        /// 서버에 System 요청을 전송합니다
+        /// 서버에 닉네임 변경 요청을 전송합니다
         /// 등록된 OnSystemResultListener 에 서버 응답이 수신됩니다
         /// </summary>
         /// <param name="_id">유저 아이디</param>
-        public void RequestUserSystem(string _id)
+        /// <param name="_nickname">유저 닉네임</param>
+        public void RequestUserSystem(string _id, String _nickname)
         {
             try
             {
@@ -478,7 +480,7 @@ namespace MSBNetwork
 #else
                 Debug.WriteLine("RequestUserSystem");
 #endif
-                JObject data = new JObject {{"id", _id}};
+                JObject data = new JObject {{"id", _id}, {"nickname", _nickname}};
                 netC2SProxy.OnSystemRequest(HostID.HostID_Server, RmiContext.ReliableSend, data.ToString());
             }
             catch (Exception e)
@@ -494,30 +496,60 @@ namespace MSBNetwork
         }
 
         /// <summary>
-        /// 서버에 Game Queue 요청을 전송합니다
+        /// 서버에 Game Solo Queue 요청을 전송합니다
         /// 등록된 OnGameMatchedListener 에 서버 응답이 수신됩니다
         /// </summary>
         /// <param name="_weapon">유저 선택 무기</param>
         /// <param name="_skin">유저 선택 스킨</param>
-        public void RequestGameQueue(int _weapon, int _skin)
+        public void RequestGameSoloQueue(int _weapon, int _skin)
         {
             try
             {
 #if (!NOUNITY)
-                Debug.Log("RequestGameQueue");
+                Debug.Log("RequestGameSoloQueue");
 #else
-                Debug.WriteLine("RequestGameQueue");
+                Debug.WriteLine("RequestGameSoloQueue");
 #endif
-                JObject data = new JObject {{"weapon", _weapon}, {"skin", _skin}};
+                JObject data = new JObject {{"mode", 0}, {"weapon", _weapon}, {"skin", _skin}};
                 netC2SProxy.OnGameQueueRequest(HostID.HostID_Server, RmiContext.ReliableSend, data.ToString());
             }
             catch (Exception e)
             {
 #if (!NOUNITY)
-                Debug.LogError("RequestGameQueue ERROR");
+                Debug.LogError("RequestGameSoloQueue ERROR");
                 Debug.LogError(e);
 #else
-                Debug.WriteLine("RequestGameQueue ERROR");
+                Debug.WriteLine("RequestGameSoloQueue ERROR");
+                Debug.WriteLine(e);
+#endif
+            }
+        }
+        
+        /// <summary>
+        /// 서버에 Game Team Queue 요청을 전송합니다
+        /// 등록된 OnGameMatchedListener 에 서버 응답이 수신됩니다
+        /// </summary>
+        /// <param name="_weapon">유저 선택 무기</param>
+        /// <param name="_skin">유저 선택 스킨</param>
+        public void RequestGameTeamQueue(int _weapon, int _skin)
+        {
+            try
+            {
+#if (!NOUNITY)
+                Debug.Log("RequestGameTeamQueue");
+#else
+                Debug.WriteLine("RequestGameTeamQueue");
+#endif
+                JObject data = new JObject {{"mode", 1}, {"weapon", _weapon}, {"skin", _skin}};
+                netC2SProxy.OnGameQueueRequest(HostID.HostID_Server, RmiContext.ReliableSend, data.ToString());
+            }
+            catch (Exception e)
+            {
+#if (!NOUNITY)
+                Debug.LogError("RequestGameTeamQueue ERROR");
+                Debug.LogError(e);
+#else
+                Debug.WriteLine("RequestGameTeamQueue ERROR");
                 Debug.WriteLine(e);
 #endif
             }
@@ -839,12 +871,14 @@ namespace MSBNetwork
 #else
                 Debug.WriteLine("OnEventSystem");
 #endif
-                // TODO
+                JObject data = JObject.Parse(_data);
+                int result = data.GetValue("result").Value<int>();
+                string message = data.GetValue("data").Value<string>();
                 if (onSystemResultListeners != null && onSystemResultListeners.Count > 0)
                 {
                     foreach (OnSystemResultListener listener in onSystemResultListeners)
                     {
-                        listener?.OnSystemResult(true);
+                        listener?.OnSystemResult(result == 1, message);
                     }
                 }
             }

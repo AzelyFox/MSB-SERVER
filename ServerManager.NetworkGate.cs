@@ -36,9 +36,10 @@ namespace MSB_SERVER
                 serverApplication.networkManager.netS2CProxy.OnStatusResult(hostID, RmiContext.ReliableSend, data.ToString());
             }
 
-            public static void OnSystemResult(HostID hostID)
+            public static void OnSystemResult(HostID hostID, int result, string dataRaw)
             {
-                
+                JObject data = new JObject {{"result", result}, {"data", dataRaw}};
+                serverApplication.networkManager.netS2CProxy.OnSystemResult(hostID, RmiContext.ReliableSend, data.ToString());
             }
 
             public static void OnGameMatched(HostID hostID, int result, int room, string message)
@@ -110,7 +111,6 @@ namespace MSB_SERVER
             {
                 JObject data = new JObject {{"from", from}, {"to", to}, {"option", option}};
                 serverApplication.networkManager.netS2CProxy.OnGameEventKill(hostID, RmiContext.ReliableSend, data.ToString());
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G] KILL : " + data);
             }
 
             public static void OnGameEventRespawn(HostID hostID, int num, int time)
@@ -145,15 +145,24 @@ namespace MSB_SERVER
             {
                 JObject data = JObject.Parse(_data);
                 string _id = data.GetValue("id")?.ToString() ?? "";
-                serverApplication.serverManager.OnUserSystem(hostID, _id);
+                string _nickname = data.GetValue("nickname")?.ToString() ?? "";
+                serverApplication.serverManager.OnUserSystem(hostID, _id, _nickname);
             }
             
             public static void EventGameQueue(HostID hostID, string _data)
             {
                 JObject data = JObject.Parse(_data);
+                int _mode = data.GetValue("mode").Value<int>();
                 int _weapon = data.GetValue("weapon").Value<int>();
                 int _skin = data.GetValue("skin").Value<int>();
-                serverApplication.serverManager.OnGameQueue(hostID, _weapon, _skin);
+                if (_mode == 0)
+                {
+                    serverApplication.serverManager.OnGameSoloQueue(hostID, _weapon, _skin);
+                }
+                if (_mode == 1)
+                {
+                    serverApplication.serverManager.OnGameTeamQueue(hostID, _weapon, _skin);
+                }
             }
             
             public static void EventGameInfo(HostID hostID, int _room, string _data)

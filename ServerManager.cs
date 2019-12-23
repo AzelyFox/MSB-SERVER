@@ -15,8 +15,8 @@ namespace MSB_SERVER
 		private static ServerManager INSTANCE;
 		private static App serverApplication;
 
-		private ConcurrentDictionary<HostID, NetworkData.ClientData> serverUserList;
-		private ConcurrentDictionary<int, NetworkData.ClientData> serverUserIndexer;
+		public static ConcurrentDictionary<HostID, NetworkData.ClientData> serverUserList;
+		public static ConcurrentDictionary<int, NetworkData.ClientData> serverUserIndexer;
 
 		private List<NetworkData.ClientData> soloGameQueue;
 		private List<NetworkData.ClientData> teamGameQueue;
@@ -324,7 +324,7 @@ namespace MSB_SERVER
 				}
 				try
 				{
-					countLive = serverApplication.serverManager.serverUserList.Count;
+					countLive = serverUserList.Count;
 					countTotal = serverApplication.databaseManager.GetTotalUserCount();
 					countRoom = serverApplication.serverManager.serverGameList.Count;
 						serverApplication.graphicalManager.OnUserCountChanged(true, true, countLive, countTotal);
@@ -365,12 +365,19 @@ namespace MSB_SERVER
 					stringRoomBuilder.Clear();
 					foreach (KeyValuePair<HostID, NetworkData.ClientData> pair in serverUserList)
 					{
-						if (pair.Value.clientUser != null && pair.Value.clientUser.userNick != null && pair.Value.clientUser.userNick.Length > 0)
+						if (pair.Value.clientUser != null)
 						{
-							stringUserBuilder.AppendLine(pair.Value.clientUser.userNick + "[" + pair.Key + "]");
+							if (!String.IsNullOrEmpty(pair.Value.clientUser.userNick))
+							{
+								stringUserBuilder.AppendLine("[IDX" + pair.Value.clientUser.userNumber + "]" + pair.Value.clientUser.userNick + "[KEY" + pair.Key + "]");
+							}
+							else
+							{
+								stringUserBuilder.AppendLine("[IDX" + pair.Value.clientUser.userNumber + "]" + pair.Value.clientUser.userID.Substring(0,5) + ".." + "[KEY" + pair.Key + "]");
+							}
 						} else
 						{
-							stringUserBuilder.AppendLine(pair.Value.clientHID.GetHashCode().ToString() + "(" + pair.Key + ")");
+							stringUserBuilder.AppendLine("UNKNOWN " + pair.Value.clientHID.GetHashCode() + "[KEY" + pair.Key + "]");
 						}
 					}
 					foreach (GameRoom gameRoom in serverGameList)
@@ -401,7 +408,7 @@ namespace MSB_SERVER
 		private static NetworkData.ClientData GetClientData(HostID hostID)
 		{
 			NetworkData.ClientData targetClient;
-			foreach (KeyValuePair<HostID, NetworkData.ClientData> pair in serverApplication.serverManager.serverUserList)
+			foreach (KeyValuePair<HostID, NetworkData.ClientData> pair in serverUserList)
 			{
 				if (pair.Value.clientHID.Equals(hostID))
 				{
@@ -416,7 +423,7 @@ namespace MSB_SERVER
 		private NetworkData.ClientData GetClientData(NetworkData.UserData userData)
         {
             NetworkData.ClientData targetClient = null;
-            foreach (KeyValuePair<HostID, NetworkData.ClientData> pair in serverApplication.serverManager.serverUserList)
+            foreach (KeyValuePair<HostID, NetworkData.ClientData> pair in serverUserList)
             {
 	            if (pair.Value?.clientUser == null || pair.Value.clientUser.userID == null || pair.Value.clientUser.userID.Equals(string.Empty))
                 {
@@ -452,7 +459,7 @@ namespace MSB_SERVER
 			NetworkData.ClientData client = GetClientData(hostID);
             if (client != null)
             {
-                serverApplication.serverManager.serverUserList.TryRemove(hostID, out client);
+                serverUserList.TryRemove(hostID, out client);
 			    soloGameQueue.Remove(client);
 			    teamGameQueue.Remove(client);
             }
@@ -467,7 +474,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserLogin : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserLogin");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserLogin");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id + "\n_pw : " + pw);
 			try
 			{
@@ -498,7 +506,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserStatus : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserStatus");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserStatus");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id);
             try
 			{
@@ -523,7 +532,7 @@ namespace MSB_SERVER
 			}
 		}
 		
-		public void OnUserSystem(HostID hostID, string id)
+		public void OnUserSystem(HostID hostID, string id, string nickname)
 		{
             serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
             if (client == null)
@@ -531,11 +540,18 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystem : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystem");
-            if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id);
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserSystem");
+            if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id + "\n_nickname : " + nickname);
             try
 			{
-				
+				string resultMSG = string.Empty;
+				bool resultSuccess = serverApplication.databaseManager.RequestUserNickname(id, nickname, ref resultMSG);
+				if (resultSuccess)
+				{
+					client.clientUser.userNick = nickname;
+				}
+				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, resultMSG);
 			}
 			catch (Exception e)
 			{
@@ -544,7 +560,7 @@ namespace MSB_SERVER
 			}
 		}
 
-		public void OnGameQueue(HostID hostID, int weapon, int skin)
+		public void OnGameSoloQueue(HostID hostID, int weapon, int skin)
 		{
             serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
             if (client == null)
@@ -552,7 +568,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnSoloQueue : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnSoloQueue");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnSoloQueue");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_weapon : " + weapon + "\n_skin : " + skin);
             try
 			{
@@ -570,7 +587,7 @@ namespace MSB_SERVER
 			}
 		}
 
-		public void OnTeamQueue(HostID hostID, int weapon, int skin)
+		public void OnGameTeamQueue(HostID hostID, int weapon, int skin)
 		{
             serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
             if (client == null)
@@ -578,7 +595,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnTeamQueue : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnTeamQueue");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnTeamQueue");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_weapon : " + weapon + "\n_skin : " + skin);
             try
 			{
@@ -604,7 +622,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnQuitQueue : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnQuitQueue");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnQuitQueue");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID);
             try
 			{
@@ -627,7 +646,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameInfo : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameInfo");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameInfo");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_room : " + room);
             try
             {
@@ -682,7 +702,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionReady : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionReady");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserActionReady");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_room : " + room);
             try
 			{
@@ -708,7 +729,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionDamage : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionDamage");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserActionDamage");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_room : " + room + "\n_num : " + num + "\n_amount : " + amount + "\n_option : " + option);
             try
             {
@@ -734,7 +756,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionObject : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionObject");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserActionObject");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_room : " + room + "\n_num : " + num + "\n_amount : " + amount);
             try
             {
@@ -760,7 +783,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionItem : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserActionItem");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserActionItem");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_room : " + room + "\n_type : " + type + "\n_num : " + num);
             try
             {
@@ -786,7 +810,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserMove : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserMove");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserMove");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_data : " + data);
             try
             {
@@ -817,7 +842,8 @@ namespace MSB_SERVER
 	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserSync : NO CLIENT FOR HOST " + hostID);
 	            return;
             }
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserSync");
+            int hostUserNum = client.clientUser?.userNumber ?? -1;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnGameUserSync");
             if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_data : " + data);
             try
             {

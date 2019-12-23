@@ -34,6 +34,7 @@ namespace MSB_SERVER
                 MSBUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
 
             graphicalManager.ShowGraphicalUserInterface();
+            commandManager.StartController();
 		}
 
         public void MSBUnhandledException(Exception e, string sender)

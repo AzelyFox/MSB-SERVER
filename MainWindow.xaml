@@ -175,8 +175,8 @@
             <Border Name="mainStatusDatabaseTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Name="mainStatusDatabaseTitle" Text="{x:Static Member=resource:Resources.STRING_DATABASE}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
-            <Border Name="mainStatusLogTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <TextBlock Name="mainStatusLogTitle" Text="{x:Static Member=resource:Resources.STRING_LOGGER}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border Name="mainStatusCommandTitleBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusCommandTitle" Text="{x:Static Member=resource:Resources.STRING_COMMAND}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <Border Name="mainStatusUserTitleBlock" Background="Black" Grid.ColumnSpan="1" Grid.Row="3" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Name="mainStatusUserTitle" Text="{x:Static Member=resource:Resources.STRING_USER}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -205,8 +205,8 @@
             <Border Name="mainStatusDatabaseBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Name="mainStatusDatabase" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
-            <Border Name="mainStatusLogBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <TextBlock Name="mainStatusLog" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border Name="mainStatusCommandBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <TextBlock Name="mainStatusCommand" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <Border Name="mainStatusUserBlock" Background="White" Grid.ColumnSpan="1" Grid.Row="4" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <TextBlock Name="mainStatusUser" Text="{x:Static Member=resource:Resources.STATUS_DEFAULT}" HorizontalAlignment="Center" VerticalAlignment="Center"/>

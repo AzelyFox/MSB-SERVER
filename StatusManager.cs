@@ -71,6 +71,7 @@ namespace MSB_SERVER
 			byte[] pingBuffer = Encoding.ASCII.GetBytes(pingString);
 			int pingTimeOut = 1000;
 			string resultString;
+			int pingCount = 0;
 
 			while (true)
 			{
@@ -80,16 +81,21 @@ namespace MSB_SERVER
 				}
 				try
 				{
-					pingReply = pingSender.Send("google.co.kr", pingTimeOut, pingBuffer, pingOptions);
-					if (pingReply != null && pingReply.Status == IPStatus.Success)
+					pingCount--;
+					if (pingCount <= 0)
 					{
-						resultString = pingReply.RoundtripTime.ToString() + "ms";
+						pingCount = 60;
+						pingReply = pingSender.Send("google.co.kr", pingTimeOut, pingBuffer, pingOptions);
+						if (pingReply != null && pingReply.Status == IPStatus.Success)
+						{
+							resultString = pingReply.RoundtripTime.ToString() + "ms";
+						}
+						else
+						{
+							resultString = Properties.Resources.ResourceManager.GetString("STATUS_OFF");
+						}
+						serverApplication.graphicalManager.OnPingStatusChanged(true, true, resultString);
 					}
-					else
-					{
-						resultString = Properties.Resources.ResourceManager.GetString("STATUS_OFF");
-					}
-					serverApplication.graphicalManager.OnPingStatusChanged(true, true, resultString);
 					Thread.Sleep(1000);
 				}
 				catch (Exception e)

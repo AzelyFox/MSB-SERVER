@@ -206,12 +206,12 @@ namespace MSB_SERVER
             netC2SStub.OnGameUserSync = OnGameUserSync;
         }
         
-        private static bool OnUserLogin(HostID remote, RmiContext rmiContext, string _data)
+        private static bool OnUserLogin(HostID host, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserLogin");
-                ServerManager.NetworkGate.EventUserLogin(remote, _data);
+                ServerManager.NetworkGate.EventUserLogin(host, _data);
             }
             catch (Exception e)
             {
@@ -221,12 +221,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnUserStatus(HostID remote, RmiContext rmiContext, string _data)
+        private static bool OnUserStatus(HostID host, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnUserStatus");
-                ServerManager.NetworkGate.EventUserStatus(remote, _data);
+                ServerManager.NetworkGate.EventUserStatus(host, _data);
             }
             catch (Exception e)
             {
@@ -236,12 +236,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnSystemRequest(HostID remote, RmiContext rmiContext, string _data)
+        private static bool OnSystemRequest(HostID host, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnSystemRequest");
-                ServerManager.NetworkGate.EventUserSystem(remote, _data);
+                ServerManager.NetworkGate.EventUserSystem(host, _data);
             }
             catch (Exception e)
             {
@@ -251,12 +251,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameQueue(HostID remote, RmiContext rmiContext, string _data)
+        private static bool OnGameQueue(HostID host, RmiContext rmiContext, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameQueue");
-                ServerManager.NetworkGate.EventGameQueue(remote, _data);
+                ServerManager.NetworkGate.EventGameQueue(host, _data);
             }
             catch (Exception e)
             {
@@ -266,12 +266,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameInfo(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameInfo(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameInfo");
-                ServerManager.NetworkGate.EventGameInfo(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameInfo(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -281,12 +281,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserActionReady(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserActionReady(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionReady");
-                ServerManager.NetworkGate.EventGameActionReady(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameActionReady(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -296,12 +296,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserActionDamage(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserActionDamage(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionDamage");
-                ServerManager.NetworkGate.EventGameActionDamage(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameActionDamage(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -311,12 +311,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserActionObject(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserActionObject(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionObject");
-                ServerManager.NetworkGate.EventGameActionObject(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameActionObject(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -326,12 +326,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserActionItem(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserActionItem(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserActionItem");
-                ServerManager.NetworkGate.EventGameActionItem(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameActionItem(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -341,12 +341,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserMove(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserMove(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserMove");
-                ServerManager.NetworkGate.EventGameUserMove(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameUserMove(host, _room, _data);
             }
             catch (Exception e)
             {
@@ -356,12 +356,12 @@ namespace MSB_SERVER
             return true;
         }
 
-        private static bool OnGameUserSync(HostID remote, RmiContext rmiContext, int _room, string _data)
+        private static bool OnGameUserSync(HostID host, RmiContext rmiContext, int _room, string _data)
         {
             try
             {
                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_NETWORK, "NetworkManager", "OnGameUserSync");
-                ServerManager.NetworkGate.EventGameUserSync(remote, _room, _data);
+                ServerManager.NetworkGate.EventGameUserSync(host, _room, _data);
             }
             catch (Exception e)
             {

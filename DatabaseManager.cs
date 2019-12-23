@@ -90,8 +90,9 @@ namespace MSB_SERVER
 				{
 					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
 					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
-					return;
 				}
+				
+				serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, true);
 				
 				try
 				{
@@ -235,7 +236,7 @@ namespace MSB_SERVER
                     dataReader.Close();
 				}
 				string passwordHash = BCrypt.Net.BCrypt.HashPassword(_pw);
-				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `user` (`user_id`, `user_pw`, `user_nick`, `user_uuid`) VALUES ('{_id}', '{passwordHash}', '{_id}', '{_uuid}')", dbConnection);
+				MySqlCommand userInsertCommand = new MySqlCommand($"INSERT INTO `user` (`user_id`, `user_pw`, `user_uuid`) VALUES ('{_id}', '{passwordHash}', '{_uuid}')", dbConnection);
 				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRegister", userInsertCommand.ToString());
 				int inserted = userInsertCommand.ExecuteNonQuery();
 				if (inserted != 1)
@@ -297,6 +298,47 @@ namespace MSB_SERVER
 			{
 				_userData = null;
 				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				return false;
+			}
+		}
+		
+		public bool RequestUserNickname(string _id, string _nickname, ref string message)
+		{
+			try
+			{
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken || dbConnection.Ping() == false)
+				{
+					dbConnection = null;
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
+				}
+				MySqlCommand userSearchCommand = new MySqlCommand($"SELECT * FROM `user` WHERE `user_nick` = '{_nickname}'", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserNickname", userSearchCommand.ToString());
+				using (MySqlDataReader dataReader = userSearchCommand.ExecuteReader())
+				{
+					if (dataReader.Read()) {
+						message = "존재하는 닉네임입니다";
+						dataReader.Close();
+						return false;
+					}
+					dataReader.Close();
+				}
+				MySqlCommand command = new MySqlCommand($"UPDATE `user` SET `user_nick` = '{_nickname}' WHERE `user_id` = '{_id}'", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserNickname", command.ToString());
+				int inserted = command.ExecuteNonQuery();
+				if (inserted != 1)
+				{
+					message = "적용되지 않았습니다";
+					return false;
+				}
+				
+				RefreshUserCount();
+				return true;
+			}
+			catch (Exception e)
+			{
+				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserNickname", e.Message + " " + e.StackTrace);
 				return false;
 			}
 		}

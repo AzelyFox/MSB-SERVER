@@ -163,7 +163,6 @@ namespace MSB_SERVER
                         if (userClient != targetClient)
                         {
                             userClient.gameKill++;
-                            userClient.lastKillTime = currentTimeStamp;
                             userClient.killHistory.Add(targetClient);
                             userClient.killStreakHistory.Add(targetClient);
                             userClient.gameBonus++;
@@ -259,6 +258,11 @@ namespace MSB_SERVER
                                 NetworkGate.OnGameStatusMessage(userClient.clientHID, 2, "2");
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "G]MEDAL] KILL STREAK : " + userClient.clientUser.userID);
                             }
+                        }
+                        
+                        if (userClient != targetClient)
+                        {
+                            userClient.lastKillTime = currentTimeStamp;
                         }
                         
                         // CHECK MEDAL - ASSIST

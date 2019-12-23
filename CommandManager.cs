@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Threading;
 using System.Windows;
+using Newtonsoft.Json.Linq;
+using WebSocketSharp;
+using WebSocketSharp.Server;
 
 namespace MSB_SERVER
 {
@@ -8,6 +12,9 @@ namespace MSB_SERVER
 		private static CommandManager INSTANCE;
 
 		private readonly App serverApplication;
+        private WebSocketServer controlServer = null;
+        private Thread controlStatusThread;
+        private bool MODULE_STOP_FLAG = false;
 
 		private static class COMMAND_ACTION
 		{
@@ -57,6 +64,74 @@ namespace MSB_SERVER
 			return INSTANCE;
 		}
 
+        public void StartController()
+        {
+            controlServer = new WebSocketServer(9983);
+            controlServer.AddWebSocketService<RemoteCommand>("/RemoteCommand");
+            controlServer.Start();
+            
+            MODULE_STOP_FLAG = false;
+            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "CommandManager", "REMOTE COMMAND 시작");
+            
+            if (controlStatusThread == null || !controlStatusThread.IsAlive)
+            {
+                controlStatusThread = new Thread(DoCommandStatus)
+                {
+                    Priority = ThreadPriority.Lowest
+                };
+            } else if (controlStatusThread.IsAlive)
+            {
+                return;
+            }
+            controlStatusThread.Start();
+        }
+
+        public void StopController()
+        {
+            MODULE_STOP_FLAG = true;
+            controlServer?.Stop();
+        }
+        
+        private void DoCommandStatus()
+        {
+            serverApplication.graphicalManager.OnCommandModuleStatusChanged(true, true);
+            while (true)
+            {
+                if (MODULE_STOP_FLAG)
+                {
+                    break;
+                }
+
+                if (controlServer != null && controlServer.IsListening)
+                {
+                    serverApplication.graphicalManager.OnCommandModuleStatusChanged(true, true);
+                }
+                else
+                {
+                    serverApplication.graphicalManager.OnCommandModuleStatusChanged(true, false);
+                    serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "CommandManager", "REMOTE COMMAND 연결 끊김");
+                }
+                
+                try
+                {
+                    Thread.Sleep(1000);
+                } catch (Exception e)
+                {
+                    serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
+                    serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 에러");
+                    serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", e.ToString());
+                    return;
+                }
+            }
+			
+            try
+            {
+                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 종료");
+                serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(false, false);
+            }
+            catch { }
+        }
+        
 		public void ApplyCommand(string commandRaw)
 		{
 			if (string.IsNullOrEmpty(commandRaw))
@@ -297,5 +372,23 @@ namespace MSB_SERVER
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "ERROR : " + e);
 			}
 		}
+        
+        private class RemoteCommand : WebSocketBehavior
+        {
+            protected override void OnMessage(MessageEventArgs e)
+            {
+                string commandRaw = e.Data;
+                try
+                {
+                    LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "REMOTE CONTROL", commandRaw);
+                    CommandManager.GetInstance().ApplyCommand(commandRaw);
+                }
+                catch (Exception exception)
+                {
+                    LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "REMOTE CONTROL", exception.Message);
+                }
+                
+            }
+        }
 	}
 }
