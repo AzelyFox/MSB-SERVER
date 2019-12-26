@@ -13,7 +13,7 @@ namespace MSB_SERVER
 
 		private static App serverApplication;
 
-		private static bool IS_SERVER_RUNNING;
+		public static bool IS_SERVER_RUNNING;
 
 		public DateTime serverStartTime;
 

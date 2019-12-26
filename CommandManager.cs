@@ -17,7 +17,10 @@ namespace MSB_SERVER
         private bool MODULE_STOP_FLAG = false;
 
 		private static class COMMAND_ACTION
-		{
+        {
+            public const string ACTION_START = "START";
+            public const string ACTION_STOP = "STOP";
+            public const string ACTION_STATUS = "STATUS";
 			public const string ACTION_DEBUG = "DEBUG";
             public const string ACTION_DETAIL = "DETAIL";
             public const string ACTION_CLEAR = "CLEAR";
@@ -29,7 +32,12 @@ namespace MSB_SERVER
 		}
 
 		private static class COMMAND_TARGET
-		{
+        {
+            public const string START_MASTER = "MASTER";
+            public const string START_DATABASE = "DATABASE";
+            public const string STOP_MASTER = "MASTER";
+            public const string STOP_DATABASE = "DATABASE";
+            public const string STATUS_ALL = "ALL";
             public const string CLEAR_LOG_ALL = "ALL";
             public const string CLEAR_LOG_SYSTEM = "SYSTEM";
             public const string CLEAR_LOG_NETWORK = "NETWORK";
@@ -153,6 +161,17 @@ namespace MSB_SERVER
 					case COMMAND_ACTION.ACTION_HELP:
 						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "clear all/system/network\ndebug on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
 						break;
+                    case COMMAND_ACTION.ACTION_START:
+                        if (NetworkManager.IS_SERVER_RUNNING) return;
+                        serverApplication.networkManager.ServerRun("localhost", 9993);
+                        break;
+                    case COMMAND_ACTION.ACTION_STOP:
+                        if (!NetworkManager.IS_SERVER_RUNNING) return;
+                        serverApplication.networkManager.ServerStop();
+                        break;
+                    case COMMAND_ACTION.ACTION_STATUS:
+                        JObject resultData = new JObject();
+                        break;
                     case COMMAND_ACTION.ACTION_CLEAR:
                         try
                         {

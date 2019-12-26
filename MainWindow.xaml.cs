@@ -79,7 +79,7 @@ namespace MSB_SERVER
 		private void OnServerButtonClicked(object sender, RoutedEventArgs e)
 		{
 			string SERVER_IP = "localhost";
-			int SERVER_PORT = 8888;
+			int SERVER_PORT = 9993;
 			try
 			{
 				if (mainEditorIP.GetLineText(0) != null && mainEditorIP.GetLineText(0).Trim().Length != 0)
