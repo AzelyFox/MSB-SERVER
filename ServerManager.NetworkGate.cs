@@ -153,6 +153,11 @@ namespace MSB_SERVER
             {
                 JObject data = JObject.Parse(_data);
                 int _mode = data.GetValue("mode").Value<int>();
+                if (_mode == -1)
+                {
+                    serverApplication.serverManager.OnQuitQueue(hostID);
+                    return;
+                }
                 int _weapon = data.GetValue("weapon").Value<int>();
                 int _skin = data.GetValue("skin").Value<int>();
                 if (_mode == 0)
