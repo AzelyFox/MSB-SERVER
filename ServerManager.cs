@@ -23,8 +23,8 @@ namespace MSB_SERVER
 
 		private List<GameRoom> serverGameList;
 
-		private Thread soloMatchMaker;
-		private Thread teamMatchMaker;
+		public Thread soloMatchMaker;
+		public Thread teamMatchMaker;
 
 		private Thread statusCountThread;
 		private Thread statusGameThread;
@@ -142,7 +142,11 @@ namespace MSB_SERVER
 						Thread.Sleep(3000);
 						continue;
 					}
-					soloGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
+					try
+					{
+						soloGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
+					}
+					catch (Exception e) { }
 					while (true)
 					{
 						if (soloGameQueue == null || soloGameQueue.Count < 2)
@@ -205,7 +209,11 @@ namespace MSB_SERVER
 						Thread.Sleep(3000);
 						continue;
 					}
-					teamGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
+					try
+					{
+						teamGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
+					}
+					catch (Exception e) { }
 					while (true)
 					{
 						if (teamGameQueue == null || teamGameQueue.Count < 6)
