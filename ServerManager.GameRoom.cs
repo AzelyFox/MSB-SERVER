@@ -701,6 +701,8 @@ namespace MSB_SERVER
                 }
 
                 gameState = GAME_STATE.STATE_CLEAR;
+
+                serverApplication.serverManager.serverGameList.Remove(this);
             }
         }
     }

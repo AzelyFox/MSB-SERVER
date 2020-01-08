@@ -22,6 +22,7 @@ namespace MSB_SERVER
             public const string ACTION_STOP = "STOP";
             public const string ACTION_STATUS = "STATUS";
 			public const string ACTION_DEBUG = "DEBUG";
+			public const string ACTION_NORMAL = "NORMAL";
             public const string ACTION_DETAIL = "DETAIL";
             public const string ACTION_CLEAR = "CLEAR";
             public const string ACTION_SYNC = "SYNC";
@@ -43,6 +44,8 @@ namespace MSB_SERVER
             public const string CLEAR_LOG_NETWORK = "NETWORK";
             public const string DEBUG_LOG_ON = "ON";
             public const string DEBUG_LOG_OFF = "OFF";
+            public const string NORMAL_LOG_ON = "ON";
+            public const string NORMAL_LOG_OFF = "OFF";
             public const string DETAIL_LOG_ON = "ON";
             public const string DETAIL_LOG_OFF = "OFF";
             public const string SYNC_TCP = "TCP";
@@ -159,7 +162,7 @@ namespace MSB_SERVER
 				switch(command[0].ToUpper())
 				{
 					case COMMAND_ACTION.ACTION_HELP:
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "clear all/system/network\ndebug on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
+						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "clear all/system/network\ndebug on/off\nnormal on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
 						break;
                     case COMMAND_ACTION.ACTION_START:
                         if (NetworkManager.IS_SERVER_RUNNING) return;
@@ -171,6 +174,12 @@ namespace MSB_SERVER
                         break;
                     case COMMAND_ACTION.ACTION_STATUS:
                         JObject resultData = new JObject();
+                        resultData.Add("MASTER", NetworkManager.IS_SERVER_RUNNING ? "ON" : "OFF");
+                        resultData.Add("SOLOMM", (serverApplication.serverManager.soloMatchMaker != null && serverApplication.serverManager.soloMatchMaker.IsAlive) ? "ON" : "OFF");
+                        resultData.Add("TEAMMM", (serverApplication.serverManager.teamMatchMaker != null && serverApplication.serverManager.teamMatchMaker.IsAlive) ? "ON" : "OFF");
+                        resultData.Add("DATABASE", serverApplication.databaseManager.CURRENT_DB_CONNECTION ? "ON" : "OFF");
+                        resultData.Add("USERTOTAL", serverApplication.databaseManager.totalUser);
+                        resultData.Add("USERLIVE", ServerManager.serverUserList != null ? ServerManager.serverUserList.Count : 0);
                         break;
                     case COMMAND_ACTION.ACTION_CLEAR:
                         try
@@ -207,6 +216,24 @@ namespace MSB_SERVER
                             {
                                 serverApplication.logManager.SAVE_DEBUG_LOGS = false;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DEBUG PRINT OFF");
+                            }
+                        } catch (Exception)
+                        {
+
+                        }
+                        break;
+                    case COMMAND_ACTION.ACTION_NORMAL:
+                        try
+                        {
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.NORMAL_LOG_ON))
+                            {
+                                serverApplication.logManager.SAVE_DEBUG_LOGS = true;
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL PRINT ON");
+                            }
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.NORMAL_LOG_OFF))
+                            {
+                                serverApplication.logManager.SAVE_DEBUG_LOGS = false;
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL PRINT OFF");
                             }
                         } catch (Exception)
                         {

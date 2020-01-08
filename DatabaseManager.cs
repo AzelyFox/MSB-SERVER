@@ -17,9 +17,11 @@ namespace MSB_SERVER
 
 		private MySqlConnection dbConnection;
 
+		public bool CURRENT_DB_CONNECTION = false;
+
 		private bool MODULE_STOP_FLAG;
 
-		private int totalUser;
+		public int totalUser;
 
 		private DatabaseManager()
 		{
@@ -34,6 +36,7 @@ namespace MSB_SERVER
 		public void StartDatabase()
 		{
 			MODULE_STOP_FLAG = false;
+			CURRENT_DB_CONNECTION = true;
 			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 시작");
 			try
 			{
@@ -69,6 +72,7 @@ namespace MSB_SERVER
 		public void StopDatabase()
 		{
 			MODULE_STOP_FLAG = true;
+			CURRENT_DB_CONNECTION = false;
 			if (dbConnection != null)
 			{
 				dbConnection.Close();
@@ -86,8 +90,10 @@ namespace MSB_SERVER
 					break;
 				}
 
+				CURRENT_DB_CONNECTION = true;
 				if (dbConnection == null || dbConnection.State == ConnectionState.Broken || dbConnection.State == ConnectionState.Closed || dbConnection.Ping() == false)
 				{
+					CURRENT_DB_CONNECTION = false;
 					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
 					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
 				}

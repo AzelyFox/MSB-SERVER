@@ -20,6 +20,7 @@ namespace MSB_SERVER
 		private TextBox mainRoomLogBox;
 
         public bool SAVE_DEBUG_LOGS = false;
+        public bool SAVE_NORMAL_LOGS = false;
 
 		public enum LOG_LEVEL
 		{
@@ -144,6 +145,10 @@ namespace MSB_SERVER
             {
                 return;
             }
+            if (!SAVE_NORMAL_LOGS && logLevel == LOG_LEVEL.LOG_NORMAL && logTarget == LOG_TARGET.LOG_NETWORK)
+            {
+	            return;
+            }
 			if (mainSystemLogBox == null || mainNetworkLogBox == null || mainUserLogBox == null || mainRoomLogBox == null)
 			{
 				return;
@@ -154,7 +159,10 @@ namespace MSB_SERVER
 			logObject.prefix = prefix;
 			logObject.message = message;
 			logObject.datetime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff");
-			logList.AddLast(logObject);
+			lock (logList)
+			{
+				logList.AddLast(logObject);
+			}
             serverApplication.Dispatcher?.Invoke(() => {
 	            SyncLogBox();
             });
@@ -172,7 +180,12 @@ namespace MSB_SERVER
 			}
 			string printString = string.Empty;
 
-			LogObject log = logList.Last();
+			LogObject log;
+			
+			lock (logList)
+			{
+				log = logList.Last();
+			}
 
 			switch (log.logLevel)
 			{

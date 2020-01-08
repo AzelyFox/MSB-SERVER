@@ -146,7 +146,7 @@ namespace MSB_SERVER
 					{
 						soloGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
 					}
-					catch (Exception e) { }
+					catch (Exception) { }
 					while (true)
 					{
 						if (soloGameQueue == null || soloGameQueue.Count < 2)
@@ -213,7 +213,7 @@ namespace MSB_SERVER
 					{
 						teamGameQueue.Sort((clientA, clientB) => clientA.clientUser.userRank.CompareTo(clientB.clientUser.userRank));
 					}
-					catch (Exception e) { }
+					catch (Exception) { }
 					while (true)
 					{
 						if (teamGameQueue == null || teamGameQueue.Count < 6)
@@ -340,18 +340,18 @@ namespace MSB_SERVER
 					Thread.Sleep(1000);
 				} catch (Exception e)
 				{
-						serverApplication.graphicalManager.OnUserCountChanged(true, false, 0, 0);
-						serverApplication.graphicalManager.OnRoomCountChanged(true, false, 0);
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "COUNT 스레드 에러");
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", e.ToString());
+					serverApplication.graphicalManager.OnUserCountChanged(true, false, 0, 0);
+					serverApplication.graphicalManager.OnRoomCountChanged(true, false, 0);
+					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "COUNT 스레드 에러");
+					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", e.ToString());
 				}
 			}
 
 			try
 			{
-					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "StatusManager", "COUNT 스레드 종료");
-					serverApplication.graphicalManager.OnUserCountChanged(false, false, 0, 0);
-					serverApplication.graphicalManager.OnRoomCountChanged(false, false, 0);
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "StatusManager", "COUNT 스레드 종료");
+				serverApplication.graphicalManager.OnUserCountChanged(false, false, 0, 0);
+				serverApplication.graphicalManager.OnRoomCountChanged(false, false, 0);
 			}
 			catch { }
 		}
