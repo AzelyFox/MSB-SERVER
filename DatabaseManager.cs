@@ -4,6 +4,7 @@ using System.Drawing.Printing;
 using System.Windows;
 using System.Threading;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
 
 namespace MSB_SERVER
 {
@@ -338,13 +339,64 @@ namespace MSB_SERVER
 					return false;
 				}
 				
-				RefreshUserCount();
 				return true;
 			}
 			catch (Exception e)
 			{
 				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
 				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserNickname", e.Message + " " + e.StackTrace);
+				return false;
+			}
+		}
+		
+		public bool RequestUserRank(string _id, ref string message)
+		{
+			try
+			{
+				JObject userRankResult = new JObject();
+				JArray userRankArray = new JArray();
+				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken || dbConnection.Ping() == false)
+				{
+					dbConnection = null;
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection.Open();
+				}
+				MySqlCommand globalRankCommand = new MySqlCommand($"SELECT * FROM `user` ORDER BY `user_rank` DESC LIMIT 3", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRank", globalRankCommand.ToString());
+				using (MySqlDataReader dataReader = globalRankCommand.ExecuteReader())
+				{
+					while (dataReader.Read())
+					{
+						JObject userRankObject = new JObject();
+						string user_id = dataReader.GetString(dataReader.GetOrdinal("user_id"));
+						string user_nick = dataReader.GetString(dataReader.GetOrdinal("user_nick"));
+						int user_rank = dataReader.GetInt32(dataReader.GetOrdinal("user_rank"));
+						userRankObject.Add("user_id", user_id);
+						userRankObject.Add("user_nick", user_nick);
+						userRankObject.Add("user_rank", user_rank);
+						userRankArray.Add(userRankObject);
+					}
+					userRankResult.Add("global_ranking", userRankArray);
+					dataReader.Close();
+				}
+				MySqlCommand userRankCommand = new MySqlCommand($"select rank from (select *, RANK() over (order by user_rank desc) as rank from user) t where `user_id` = '{_id}'", dbConnection);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRank", userRankCommand.ToString());
+				using (MySqlDataReader dataReader = userRankCommand.ExecuteReader())
+				{
+					if (dataReader.Read()) {
+						int user_ranking = dataReader.GetInt32(dataReader.GetOrdinal("rank"));
+						userRankResult.Add("user_ranking", user_ranking);
+					}
+					dataReader.Close();
+				}
+
+				message = userRankResult.ToString();
+				return true;
+			}
+			catch (Exception e)
+			{
+				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRank", e.Message + " " + e.StackTrace);
 				return false;
 			}
 		}

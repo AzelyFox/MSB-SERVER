@@ -1,4 +1,5 @@
-﻿using Nettention.Proud;
+﻿using System;
+using Nettention.Proud;
 using Newtonsoft.Json.Linq;
 
 namespace MSB_SERVER
@@ -36,9 +37,9 @@ namespace MSB_SERVER
                 serverApplication.networkManager.netS2CProxy.OnStatusResult(hostID, RmiContext.ReliableSend, data.ToString());
             }
 
-            public static void OnSystemResult(HostID hostID, int result, string dataRaw)
+            public static void OnSystemResult(HostID hostID, int result, string type, string dataRaw)
             {
-                JObject data = new JObject {{"result", result}, {"data", dataRaw}};
+                JObject data = new JObject {{"result", result}, {"type", type}, {"data", dataRaw}};
                 serverApplication.networkManager.netS2CProxy.OnSystemResult(hostID, RmiContext.ReliableSend, data.ToString());
             }
 
@@ -144,9 +145,17 @@ namespace MSB_SERVER
             public static void EventUserSystem(HostID hostID, string _data)
             {
                 JObject data = JObject.Parse(_data);
+                string _type = data.GetValue("type")?.ToString() ?? String.Empty;
                 string _id = data.GetValue("id")?.ToString() ?? "";
                 string _nickname = data.GetValue("nickname")?.ToString() ?? "";
-                serverApplication.serverManager.OnUserSystem(hostID, _id, _nickname);
+                if (_type.Equals("nick"))
+                {
+                    serverApplication.serverManager.OnUserSystemNick(hostID, _id, _nickname);
+                }
+                if (_type.Equals("rank"))
+                {
+                    serverApplication.serverManager.OnUserSystemRank(hostID, _id);
+                }
             }
             
             public static void EventGameQueue(HostID hostID, string _data)

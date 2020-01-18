@@ -172,7 +172,7 @@ namespace MSB_SERVER
 						NetworkGate.OnGameMatched(clientDataA.clientHID, 1, soloRoom.gameNumber, string.Empty);
                         NetworkGate.OnGameMatched(clientDataB.clientHID, 1, soloRoom.gameNumber, string.Empty);
 
-						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "Solo Game\n" + clientDataA.clientUser.userID + " VS " + clientDataB.clientUser.userID);
+						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "Solo Game\n" + clientDataA.clientUser.userNick + " VS " + clientDataB.clientUser.userNick);
 					}
 				}
 				catch (Exception e)
@@ -267,7 +267,7 @@ namespace MSB_SERVER
                         NetworkGate.OnGameMatched(clientDataBB.clientHID, 1, teamRoom.gameNumber, string.Empty);
                         NetworkGate.OnGameMatched(clientDataBC.clientHID, 1, teamRoom.gameNumber, string.Empty);
 
-                        serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "Team Game\n" + clientDataAA.clientUser.userID + " VS " + clientDataBA.clientUser.userID + "\n" + clientDataAB.clientUser.userID + " VS " + clientDataBB.clientUser.userID + "\n" + clientDataAC.clientUser.userID + " VS " + clientDataBC.clientUser.userID);
+                        serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "ServerManager", "Team Game\n" + clientDataAA.clientUser.userNick + " VS " + clientDataBA.clientUser.userNick + "\n" + clientDataAB.clientUser.userNick + " VS " + clientDataBB.clientUser.userNick + "\n" + clientDataAC.clientUser.userNick + " VS " + clientDataBC.clientUser.userNick);
 					}
 				} catch (Exception e)
 				{
@@ -539,19 +539,19 @@ namespace MSB_SERVER
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
 			}
 		}
-		
-		public void OnUserSystem(HostID hostID, string id, string nickname)
+
+		public void OnUserSystemNick(HostID hostID, string id, string nickname)
 		{
-            serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
-            if (client == null)
-            {
-	            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystem : NO CLIENT FOR HOST " + hostID);
-	            return;
-            }
-            int hostUserNum = client.clientUser?.userNumber ?? -1;
-            serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserSystem");
-            if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id + "\n_nickname : " + nickname);
-            try
+			serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
+			if (client == null)
+			{
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemNick : NO CLIENT FOR HOST " + hostID);
+				return;
+			}
+			int hostUserNum = client.clientUser?.userNumber ?? -1;
+			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserSystemNick");
+			if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id + "\n_nickname : " + nickname);
+			try
 			{
 				string resultMSG = string.Empty;
 				bool resultSuccess = serverApplication.databaseManager.RequestUserNickname(id, nickname, ref resultMSG);
@@ -559,11 +559,35 @@ namespace MSB_SERVER
 				{
 					client.clientUser.userNick = nickname;
 				}
-				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, resultMSG);
+				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, "nick", resultMSG);
 			}
 			catch (Exception e)
 			{
-				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystem ERROR");
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemNick ERROR");
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
+			}
+		}
+		
+		public void OnUserSystemRank(HostID hostID, string id)
+		{
+			serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
+			if (client == null)
+			{
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemRank : NO CLIENT FOR HOST " + hostID);
+				return;
+			}
+			int hostUserNum = client.clientUser?.userNumber ?? -1;
+			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserSystemRank");
+			if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_id : " + id);
+			try
+			{
+				string resultMSG = string.Empty;
+				bool resultSuccess = serverApplication.databaseManager.RequestUserRank(id,  ref resultMSG);
+				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, "rank", resultMSG);
+			}
+			catch (Exception e)
+			{
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemRank ERROR");
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
 			}
 		}
