@@ -92,14 +92,19 @@ namespace MSB_SERVER
 				}
 
 				CURRENT_DB_CONNECTION = true;
-				if (dbConnection == null || dbConnection.State == ConnectionState.Broken || dbConnection.State == ConnectionState.Closed || dbConnection.Ping() == false)
+				if (dbConnection != null && (dbConnection.State == ConnectionState.Connecting || dbConnection.State == ConnectionState.Executing || dbConnection.State == ConnectionState.Fetching || dbConnection.State == ConnectionState.Open))
 				{
-					CURRENT_DB_CONNECTION = false;
-					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
-					serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
+					serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, true);
 				}
-				
-				serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, true);
+				else
+				{
+					if (dbConnection == null || dbConnection.State == ConnectionState.Broken || dbConnection.State == ConnectionState.Closed || dbConnection.Ping() == false)
+					{
+						CURRENT_DB_CONNECTION = false;
+						serverApplication.graphicalManager.OnDatabaseModuleStatusChanged(true, false);
+						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager", "DATABASE 연결 끊김");
+					}
+				}
 				
 				try
 				{
@@ -349,7 +354,7 @@ namespace MSB_SERVER
 			}
 		}
 		
-		public bool RequestUserRank(string _id, ref string message)
+		public bool RequestLeaderBoard(string _id, ref string message)
 		{
 			try
 			{
@@ -371,20 +376,70 @@ namespace MSB_SERVER
 						string user_id = dataReader.GetString(dataReader.GetOrdinal("user_id"));
 						string user_nick = dataReader.GetString(dataReader.GetOrdinal("user_nick"));
 						int user_rank = dataReader.GetInt32(dataReader.GetOrdinal("user_rank"));
+						int user_played = dataReader.GetInt32(dataReader.GetOrdinal("user_played"));
+						int user_win = dataReader.GetInt32(dataReader.GetOrdinal("user_win"));
+						int user_lose = dataReader.GetInt32(dataReader.GetOrdinal("user_lose"));
+						int user_kill = dataReader.GetInt32(dataReader.GetOrdinal("user_kill"));
+						int user_death = dataReader.GetInt32(dataReader.GetOrdinal("user_death"));
+						int user_assist = dataReader.GetInt32(dataReader.GetOrdinal("user_assist"));
+						int user_damage_give = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_give"));
+						int user_damage_take = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_take"));
+						int user_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_1"));
+						int user_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_2"));
+						int user_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3"));
 						userRankObject.Add("user_id", user_id);
 						userRankObject.Add("user_nick", user_nick);
 						userRankObject.Add("user_rank", user_rank);
+						userRankObject.Add("user_played", user_played);
+						userRankObject.Add("user_win", user_win);
+						userRankObject.Add("user_lose", user_lose);
+						userRankObject.Add("user_kill", user_kill);
+						userRankObject.Add("user_death", user_death);
+						userRankObject.Add("user_assist", user_assist);
+						userRankObject.Add("user_damage_give", user_damage_give);
+						userRankObject.Add("user_damage_take", user_damage_take);
+						userRankObject.Add("user_character_1", user_character_1);
+						userRankObject.Add("user_character_2", user_character_2);
+						userRankObject.Add("user_character_3", user_character_3);
 						userRankArray.Add(userRankObject);
 					}
 					userRankResult.Add("global_ranking", userRankArray);
 					dataReader.Close();
 				}
-				MySqlCommand userRankCommand = new MySqlCommand($"select rank from (select *, RANK() over (order by user_rank desc) as rank from user) t where `user_id` = '{_id}'", dbConnection);
+				MySqlCommand userRankCommand = new MySqlCommand($"select * from (select *, RANK() over (order by user_rank desc) as user_ranking from user) t where `user_id` = '{_id}'", dbConnection);
 				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRank", userRankCommand.ToString());
 				using (MySqlDataReader dataReader = userRankCommand.ExecuteReader())
 				{
 					if (dataReader.Read()) {
+						string user_id = dataReader.GetString(dataReader.GetOrdinal("user_id"));
+						string user_nick = dataReader.GetString(dataReader.GetOrdinal("user_nick"));
+						int user_rank = dataReader.GetInt32(dataReader.GetOrdinal("user_rank"));
+						int user_played = dataReader.GetInt32(dataReader.GetOrdinal("user_played"));
+						int user_win = dataReader.GetInt32(dataReader.GetOrdinal("user_win"));
+						int user_lose = dataReader.GetInt32(dataReader.GetOrdinal("user_lose"));
+						int user_kill = dataReader.GetInt32(dataReader.GetOrdinal("user_kill"));
+						int user_death = dataReader.GetInt32(dataReader.GetOrdinal("user_death"));
+						int user_assist = dataReader.GetInt32(dataReader.GetOrdinal("user_assist"));
+						int user_damage_give = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_give"));
+						int user_damage_take = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_take"));
+						int user_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_1"));
+						int user_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_2"));
+						int user_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3"));
 						int user_ranking = dataReader.GetInt32(dataReader.GetOrdinal("rank"));
+						userRankResult.Add("user_id", user_id);
+						userRankResult.Add("user_nick", user_nick);
+						userRankResult.Add("user_rank", user_rank);
+						userRankResult.Add("user_played", user_played);
+						userRankResult.Add("user_win", user_win);
+						userRankResult.Add("user_lose", user_lose);
+						userRankResult.Add("user_kill", user_kill);
+						userRankResult.Add("user_death", user_death);
+						userRankResult.Add("user_assist", user_assist);
+						userRankResult.Add("user_damage_give", user_damage_give);
+						userRankResult.Add("user_damage_take", user_damage_take);
+						userRankResult.Add("user_character_1", user_character_1);
+						userRankResult.Add("user_character_2", user_character_2);
+						userRankResult.Add("user_character_3", user_character_3);
 						userRankResult.Add("user_ranking", user_ranking);
 					}
 					dataReader.Close();
@@ -401,7 +456,7 @@ namespace MSB_SERVER
 			}
 		}
 
-		public bool saveUserRank(ServerManager.GameRoom gameRoom, int _userIndex, int _amount)
+		public bool saveUserGameResult(ServerManager.GameRoom gameRoom, int _userIndex, NetworkData.ClientData _clientData)
 		{
 			try
 			{
@@ -411,22 +466,46 @@ namespace MSB_SERVER
 					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
 					dbConnection.Open();
 				}
-				MySqlCommand command = new MySqlCommand($"UPDATE `user` SET `user_rank` = `user_rank` + @userRank WHERE `user_index` = @userIndex", dbConnection);
-				command.Parameters.AddWithValue("@userRank", _amount);
+				MySqlCommand command = new MySqlCommand($"UPDATE `user` SET " +
+				                                        $"`user_rank` = `user_rank` + @userRank, " +
+				                                        $"`user_played` = `user_played` + @userPlayed, " +
+				                                        $"`user_win` = `user_win` + @userWin, " +
+				                                        $"`user_lose` = `user_lose` + @userLose, " +
+				                                        $"`user_kill` = `user_kill` + @userKill, " +
+				                                        $"`user_death` = `user_death` + @userDeath, " +
+				                                        $"`user_assist` = `user_assist` + @userAssist, " +
+				                                        $"`user_damage_give` = `user_damage_give` + @userDamageGive, " +
+				                                        $"`user_damage_take` = `user_damage_take` + @userDamageTake, " +
+				                                        $"`user_character_1` = `user_character_1` + @userCharacter1, " +
+				                                        $"`user_character_2` = `user_character_2` + @userCharacter2, " +
+				                                        $"`user_character_3` = `user_character_3` + @userCharacter3 " +
+				                                        $"WHERE `user_index` = @userIndex", dbConnection);
+				command.Parameters.AddWithValue("@userRank", _clientData.gameBonus);
+				command.Parameters.AddWithValue("@userPlayed", 1);
+				command.Parameters.AddWithValue("@userWin", _clientData.gameWin ? 1 : 0);
+				command.Parameters.AddWithValue("@userLose", _clientData.gameLose ? 1 : 0);
+				command.Parameters.AddWithValue("@userKill", _clientData.gameKill);
+				command.Parameters.AddWithValue("@userDeath", _clientData.gameDeath);
+				command.Parameters.AddWithValue("@userAssist", _clientData.gameAssist);
+				command.Parameters.AddWithValue("@userDamageGive", _clientData.totalGivenDamage);
+				command.Parameters.AddWithValue("@userDamageTake", _clientData.totalTakenDamage);
+				command.Parameters.AddWithValue("@userCharacter1", _clientData.clientUser.userSkin == 0 ? 1 : 0);
+				command.Parameters.AddWithValue("@userCharacter2", _clientData.clientUser.userSkin == 1 ? 1 : 0);
+				command.Parameters.AddWithValue("@userCharacter3", _clientData.clientUser.userSkin == 2 ? 1 : 0);
 				command.Parameters.AddWithValue("@userIndex", _userIndex);
-				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserRank", command.ToString());
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserGameResult", command.ToString());
 				int inserted = command.ExecuteNonQuery();
 				if (inserted != 1)
 				{
-					LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserRank", "NOT UPDATED");
+					LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserGameResult", "NOT UPDATED");
 					return false;
 				}
 				return true;
 			}
 			catch (Exception e)
 			{
-				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserRank", e.Message);
-				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserRank", e.StackTrace);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserGameResult", e.Message);
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserGameResult", e.StackTrace);
 
 				return false;
 			}

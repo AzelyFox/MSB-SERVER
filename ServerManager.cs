@@ -582,7 +582,7 @@ namespace MSB_SERVER
 			try
 			{
 				string resultMSG = string.Empty;
-				bool resultSuccess = serverApplication.databaseManager.RequestUserRank(id,  ref resultMSG);
+				bool resultSuccess = serverApplication.databaseManager.RequestLeaderBoard(id,  ref resultMSG);
 				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, "rank", resultMSG);
 			}
 			catch (Exception e)

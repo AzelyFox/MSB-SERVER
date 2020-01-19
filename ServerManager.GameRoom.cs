@@ -101,10 +101,12 @@ namespace MSB_SERVER
                     foreach (NetworkData.ClientData clientData in clientList)
                     {
                         clientData.currentReady = true;
+                        clientData.character = -1;
                         clientData.gameRespawn = 0;
                         clientData.gameHealth = 100;
                         clientData.gameKill = 0;
                         clientData.gameDeath = 0;
+                        clientData.gameAssist = 0;
                         clientData.gameBonus = 0;
                         clientData.enduredDamage = 0;
                         clientData.lastKillTime = 0;
@@ -112,6 +114,8 @@ namespace MSB_SERVER
                         clientData.stunGivenClient = null;
                         clientData.totalGivenDamage = 0;
                         clientData.totalTakenDamage = 0;
+                        clientData.gameWin = false;
+                        clientData.gameLose = false;
                         clientData.killHistory?.Clear();
                         clientData.killStreakHistory?.Clear();
                         clientData.assistHistory?.Clear();
@@ -544,7 +548,7 @@ namespace MSB_SERVER
                         if (clientData.totalGivenDamage >= gameTotalDamage/10 * 8)
                         {
                             // ACHIEVE clientData ATTACK GOLD
-                            clientData.gameBonus += 4;
+                            clientData.gameBonus += 6;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 9);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "9");
@@ -552,7 +556,7 @@ namespace MSB_SERVER
                         } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 7)
                         {
                             // ACHIEVE clientData ATTACK SILVER
-                            clientData.gameBonus += 3;
+                            clientData.gameBonus += 4;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 8);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "8");
@@ -572,7 +576,7 @@ namespace MSB_SERVER
                         if (clientData.totalGivenDamage >= gameTotalDamage/10 * 7)
                         {
                             // ACHIEVE clientData ATTACK GOLD
-                            clientData.gameBonus += 4;
+                            clientData.gameBonus += 6;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 9);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "9");
@@ -580,7 +584,7 @@ namespace MSB_SERVER
                         } else if (clientData.totalGivenDamage >= gameTotalDamage/10 * 5)
                         {
                             // ACHIEVE clientData ATTACK SILVER
-                            clientData.gameBonus += 3;
+                            clientData.gameBonus += 4;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 8);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "8");
@@ -605,7 +609,7 @@ namespace MSB_SERVER
                         if (clientData.totalTakenDamage >= gameTotalDamage/10 * 8)
                         {
                             // ACHIEVE clientData DEFENSE GOLD
-                            clientData.gameBonus += 4;
+                            clientData.gameBonus += 6;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 12);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "12");
@@ -613,7 +617,7 @@ namespace MSB_SERVER
                         } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 7)
                         {
                             // ACHIEVE clientData DEFENSE SILVER
-                            clientData.gameBonus += 3;
+                            clientData.gameBonus += 4;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 11);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "11");
@@ -633,7 +637,7 @@ namespace MSB_SERVER
                         if (clientData.totalTakenDamage >= gameTotalDamage/10 * 7)
                         {
                             // ACHIEVE clientData DEFENSE GOLD
-                            clientData.gameBonus += 4;
+                            clientData.gameBonus += 6;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 12);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "12");
@@ -641,7 +645,7 @@ namespace MSB_SERVER
                         } else if (clientData.totalTakenDamage >= gameTotalDamage/10 * 5)
                         {
                             // ACHIEVE clientData DEFENSE SILVER
-                            clientData.gameBonus += 3;
+                            clientData.gameBonus += 4;
                             int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 11);
                             clientData.medalHistory.Add(medalIndex);
                             NetworkGate.OnGameStatusMessage(clientData.clientHID, 2, "11");
@@ -665,29 +669,37 @@ namespace MSB_SERVER
                 {
                     foreach (NetworkData.ClientData clientData in clientList)
                     {
-                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus);
+                        DatabaseManager.GetInstance().saveUserGameResult(this, clientData.clientUser.userNumber, clientData);
                     }
                 }
                 if (gameBlueTotal > gameRedTotal)
                 {
                     foreach (NetworkData.ClientData clientData in clientBlueList)
                     {
-                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus + gameMatchValue);
+                        clientData.gameWin = true;
+                        clientData.gameBonus += gameMatchValue;
+                        DatabaseManager.GetInstance().saveUserGameResult(this, clientData.clientUser.userNumber, clientData);
                     }
                     foreach (NetworkData.ClientData clientData in clientRedList)
                     {
-                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus - gameMatchValue);
+                        clientData.gameLose = true;
+                        clientData.gameBonus -= gameMatchValue;
+                        DatabaseManager.GetInstance().saveUserGameResult(this, clientData.clientUser.userNumber, clientData);
                     }
                 }
                 if (gameBlueTotal < gameRedTotal)
                 {
                     foreach (NetworkData.ClientData clientData in clientRedList)
                     {
-                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus + gameMatchValue);
+                        clientData.gameWin = true;
+                        clientData.gameBonus += gameMatchValue;
+                        DatabaseManager.GetInstance().saveUserGameResult(this, clientData.clientUser.userNumber, clientData);
                     }
                     foreach (NetworkData.ClientData clientData in clientBlueList)
                     {
-                        DatabaseManager.GetInstance().saveUserRank(this, clientData.clientUser.userNumber, clientData.gameBonus - gameMatchValue);
+                        clientData.gameLose = true;
+                        clientData.gameBonus -= gameMatchValue;
+                        DatabaseManager.GetInstance().saveUserGameResult(this, clientData.clientUser.userNumber, clientData);
                     }
                 }
                 

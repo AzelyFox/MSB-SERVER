@@ -35,10 +35,12 @@ namespace MSB_SERVER
 			public HostID clientHID;
 			public ServerManager.GameRoom currentGame;
 			public bool currentReady;
+			public int character = -1;
             public int gameRespawn = 0;
             public int gameHealth = 100;
             public int gameKill = 0;
             public int gameDeath = 0;
+            public int gameAssist = 0;
             public int gameBonus = 0;
             public int enduredDamage = 0;
             public long lastKillTime = 0;
@@ -46,6 +48,8 @@ namespace MSB_SERVER
             public ClientData stunGivenClient = null;
             public int totalGivenDamage = 0;
             public int totalTakenDamage = 0;
+            public bool gameWin = false;
+            public bool gameLose = false;
             public List<ClientData> killHistory = new List<ClientData>();
             public List<ClientData> assistHistory = new List<ClientData>();
             public List<ClientData> killStreakHistory = new List<ClientData>();
