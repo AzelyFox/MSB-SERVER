@@ -103,6 +103,8 @@ namespace MSB_SERVER
                 logList.Clear();
                 mainSystemLogBox.Clear();
                 mainNetworkLogBox.Clear();
+                mainSystemErrorLogBox.Clear();
+                mainNetworkErrorLogBox.Clear();
             }
 
             int index = 0;
