@@ -132,6 +132,7 @@
     <Compile Include="Assets\MSBS2C_proxy.cs" />
     <Compile Include="Assets\MSBS2C_stub.cs" />
     <Compile Include="CommandManager.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="NetworkData.cs" />
     <Compile Include="NetworkManager.cs" />
     <Compile Include="NetworkModule.cs" />

@@ -4,3 +4,12 @@
 /.idea
 /packages
 .DS_Store
+Win32
+x64
+PIDL.bat
+PIDL.exe
+ProudDotNetClient.dll
+ProudDotNetClient.pdb
+ProudDotNetServer.dll
+ProudDotNetServer.pdb
+Constants.cs

@@ -44,7 +44,7 @@ namespace MSB_SERVER
 				if (dbConnection == null || dbConnection.State == ConnectionState.Closed || dbConnection.State == ConnectionState.Broken || dbConnection.Ping() == false)
 				{
 					dbConnection = null;
-					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8");
+					dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8");
 					dbConnection.Open();
 				}
 			}
@@ -92,7 +92,7 @@ namespace MSB_SERVER
 				}
 
 				CURRENT_DB_CONNECTION = true;
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				{
 					dbConnection.Open();
 					if (dbConnection.Ping())
@@ -131,7 +131,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand userSearchCommand = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
@@ -161,7 +161,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand userSearchCommand = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
@@ -228,7 +228,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				{
 					dbConnection.Open();
 					using (MySqlCommand userSearchCommand  = dbConnection.CreateCommand())
@@ -275,7 +275,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand userSearchCommand = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
@@ -321,7 +321,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				{
 					dbConnection.Open();
 					using (MySqlCommand userSearchCommand = dbConnection.CreateCommand())
@@ -367,7 +367,7 @@ namespace MSB_SERVER
 			{
 				JObject userRankResult = new JObject();
 				JArray userRankArray = new JArray();
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				{
 					dbConnection.Open();
 					using (MySqlCommand globalRankCommand = dbConnection.CreateCommand())
@@ -416,7 +416,7 @@ namespace MSB_SERVER
 
 					using (MySqlCommand userRankCommand = dbConnection.CreateCommand())
 					{
-						userRankCommand.CommandText = $"select * from (select *, RANK() over (order by user_rank desc) as user_ranking from user) t where `user_id` = '{_id}'";
+						userRankCommand.CommandText = $"select * from (select *, RANK() over (order by user_rank desc) as user_ranking, lag(user_rank, 1) OVER (ORDER BY user_rank desc) winner_rank, lag(user_nick, 1) OVER (ORDER BY user_rank desc) winner_nick, lag(user_character_1, 1) OVER (ORDER BY user_rank desc) winner_character_1, lag(user_character_2, 1) OVER (ORDER BY user_rank desc) winner_character_2, lag(user_character_3, 1) OVER (ORDER BY user_rank desc) winner_character_3, lead(user_rank, 1) OVER (ORDER BY user_rank desc) loser_rank, lead(user_nick, 1) OVER (ORDER BY user_rank desc) loser_nick, lead(user_character_1, 1) OVER (ORDER BY user_rank desc) loser_character_1, lead(user_character_2, 1) OVER (ORDER BY user_rank desc) loser_character_2, lead(user_character_3, 1) OVER (ORDER BY user_rank desc) loser_character_3 from user) t where `user_id` = '{_id}'";
 						LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestUserRank", userRankCommand.ToString());
 						using (MySqlDataReader dataReader = userRankCommand.ExecuteReader())
 						{
@@ -436,6 +436,16 @@ namespace MSB_SERVER
 								int user_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_2"));
 								int user_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3"));
 								int user_ranking = dataReader.GetInt32(dataReader.GetOrdinal("user_ranking"));
+								int winner_rank = dataReader.GetInt32(dataReader.GetOrdinal("winner_rank"));
+								int winner_nick = dataReader.GetInt32(dataReader.GetOrdinal("winner_nick"));
+								int winner_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_1"));
+								int winner_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_2"));
+								int winner_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_3"));
+								int loser_rank = dataReader.GetInt32(dataReader.GetOrdinal("loser_rank"));
+								int loser_nick = dataReader.GetInt32(dataReader.GetOrdinal("loser_nick"));
+								int loser_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_1"));
+								int loser_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_2"));
+								int loser_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_3"));
 								userRankResult.Add("user_id", user_id);
 								userRankResult.Add("user_nick", user_nick);
 								userRankResult.Add("user_rank", user_rank);
@@ -451,6 +461,16 @@ namespace MSB_SERVER
 								userRankResult.Add("user_character_2", user_character_2);
 								userRankResult.Add("user_character_3", user_character_3);
 								userRankResult.Add("user_ranking", user_ranking);
+								userRankResult.Add("winner_rank", winner_rank);
+								userRankResult.Add("winner_nick", winner_nick);
+								userRankResult.Add("winner_character_1", winner_character_1);
+								userRankResult.Add("winner_character_2", winner_character_2);
+								userRankResult.Add("winner_character_3", winner_character_3);
+								userRankResult.Add("loser_rank", loser_rank);
+								userRankResult.Add("loser_nick", loser_nick);
+								userRankResult.Add("loser_character_1", loser_character_1);
+								userRankResult.Add("loser_character_2", loser_character_2);
+								userRankResult.Add("loser_character_3", loser_character_3);
 							}
 							dataReader.Close();
 						}
@@ -471,7 +491,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand command = dbConnection.CreateCommand())
 				{ 
 					dbConnection.Open();
@@ -525,7 +545,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand sqlCommand = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
@@ -552,7 +572,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand command = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
@@ -598,7 +618,7 @@ namespace MSB_SERVER
 		{
 			try
 			{
-				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=msb;PASSWORD=4nocK2EPOgBG8bt6;Charset=utf8"))
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
 				using (MySqlCommand command = dbConnection.CreateCommand())
 				{
 					dbConnection.Open();
