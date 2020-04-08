@@ -437,12 +437,12 @@ namespace MSB_SERVER
 								int user_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3"));
 								int user_ranking = dataReader.GetInt32(dataReader.GetOrdinal("user_ranking"));
 								int winner_rank = dataReader.GetInt32(dataReader.GetOrdinal("winner_rank"));
-								int winner_nick = dataReader.GetInt32(dataReader.GetOrdinal("winner_nick"));
+								string winner_nick = dataReader.GetString(dataReader.GetOrdinal("winner_nick"));
 								int winner_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_1"));
 								int winner_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_2"));
 								int winner_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("winner_character_3"));
 								int loser_rank = dataReader.GetInt32(dataReader.GetOrdinal("loser_rank"));
-								int loser_nick = dataReader.GetInt32(dataReader.GetOrdinal("loser_nick"));
+								string loser_nick = dataReader.GetString(dataReader.GetOrdinal("loser_nick"));
 								int loser_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_1"));
 								int loser_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_2"));
 								int loser_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("loser_character_3"));
