@@ -148,6 +148,7 @@ namespace MSB_SERVER
                 string _type = data.GetValue("type")?.ToString() ?? String.Empty;
                 string _id = data.GetValue("id")?.ToString() ?? "";
                 string _nickname = data.GetValue("nickname")?.ToString() ?? "";
+                int _index = data.GetValue("index")?.Value<int>()?? -1;
                 if (_type.Equals("nick"))
                 {
                     serverApplication.serverManager.OnUserSystemNick(hostID, _id, _nickname);
@@ -155,6 +156,10 @@ namespace MSB_SERVER
                 if (_type.Equals("rank"))
                 {
                     serverApplication.serverManager.OnUserSystemRank(hostID, _id);
+                }
+                if (_type.Equals("medal"))
+                {
+                    serverApplication.serverManager.OnUserSystemMedal(hostID, _index);
                 }
             }
             

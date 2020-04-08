@@ -486,6 +486,47 @@ namespace MSB_SERVER
 				return false;
 			}
 		}
+		
+		public bool RequestMedalStatus(int _index, ref string message)
+		{
+			try
+			{
+				JObject userMedalResult = new JObject();
+				JArray userMedalArray = new JArray();
+				using (dbConnection = new MySqlConnection("SERVER=localhost;DATABASE=msb;UID=" + Constants.DB_ACCOUNT + ";PASSWORD=" + Constants.DB_PASSWORD + ";Charset=utf8"))
+				{
+					dbConnection.Open();
+
+					using (MySqlCommand userRankCommand = dbConnection.CreateCommand())
+					{
+						userRankCommand.CommandText = $"SELECT `medal_type`, COUNT(*) as `medal_count` FROM `user_medal` WHERE `medal_user` = {_index} group by `medal_type`";
+						LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestMedalStatus", userRankCommand.ToString());
+						using (MySqlDataReader dataReader = userRankCommand.ExecuteReader())
+						{
+							while (dataReader.Read())
+							{
+								JObject userMedalObject = new JObject();
+								int medal_type = dataReader.GetInt32(dataReader.GetOrdinal("medal_type"));
+								int medal_count = dataReader.GetInt32(dataReader.GetOrdinal("medal_count"));
+								userMedalObject.Add("medal_type", medal_type);
+								userMedalObject.Add("medal_count", medal_count);
+								userMedalArray.Add(userMedalObject);
+							}
+							userMedalResult.Add("medal_status", userMedalArray);
+							dataReader.Close();
+						}
+					}
+				}
+				message = userMedalResult.ToString();
+				return true;
+			}
+			catch (Exception e)
+			{
+				message = "DB 문제가 발생하였습니다 : " + e.Message + " " + e.StackTrace;
+				LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestMedalStatus", e.Message + " " + e.StackTrace);
+				return false;
+			}
+		}
 
 		public bool saveUserGameResult(ServerManager.GameRoom gameRoom, int _userIndex, NetworkData.ClientData _clientData)
 		{

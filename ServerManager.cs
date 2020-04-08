@@ -591,6 +591,30 @@ namespace MSB_SERVER
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
 			}
 		}
+		
+		public void OnUserSystemMedal(HostID hostID, int index)
+		{
+			serverUserList.TryGetValue(hostID, out NetworkData.ClientData client);
+			if (client == null)
+			{
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemMedal : NO CLIENT FOR HOST " + hostID);
+				return;
+			}
+			int hostUserNum = client.clientUser?.userNumber ?? -1;
+			serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "<" + hostUserNum + ":" + hostID + ">" + "OnUserSystemMedal");
+			if (DETAIL_LOG) serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "_hostID : " + hostID + "\n_index : " + index);
+			try
+			{
+				string resultMSG = string.Empty;
+				bool resultSuccess = serverApplication.databaseManager.RequestMedalStatus(index,  ref resultMSG);
+				NetworkGate.OnSystemResult(client.clientHID, resultSuccess ? 1 : 0, "medal", resultMSG);
+			}
+			catch (Exception e)
+			{
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnUserSystemMedal ERROR");
+				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
+			}
+		}
 
 		public void OnGameSoloQueue(HostID hostID, int weapon, int skin)
 		{
