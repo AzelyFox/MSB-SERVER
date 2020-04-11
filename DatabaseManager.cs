@@ -548,7 +548,10 @@ namespace MSB_SERVER
 					                      $"`user_damage_take` = `user_damage_take` + @userDamageTake, " +
 					                      $"`user_character_1` = `user_character_1` + @userCharacter1, " +
 					                      $"`user_character_2` = `user_character_2` + @userCharacter2, " +
-					                      $"`user_character_3` = `user_character_3` + @userCharacter3 " +
+					                      $"`user_character_3` = `user_character_3` + @userCharacter3, " +
+					                      $"`user_character_1_win` = `user_character_1_win` + @userCharacterWin1, " +
+					                      $"`user_character_2_win` = `user_character_2_win` + @userCharacterWin2, " +
+					                      $"`user_character_3_win` = `user_character_3_win` + @userCharacterWin3 " +
 					                      $"WHERE `user_index` = @userIndex";
 					command.Parameters.AddWithValue("@userRank", _clientData.gameBonus);
 					command.Parameters.AddWithValue("@userPlayed", 1);
@@ -562,6 +565,9 @@ namespace MSB_SERVER
 					command.Parameters.AddWithValue("@userCharacter1", _clientData.clientUser.userSkin == 0 ? 1 : 0);
 					command.Parameters.AddWithValue("@userCharacter2", _clientData.clientUser.userSkin == 1 ? 1 : 0);
 					command.Parameters.AddWithValue("@userCharacter3", _clientData.clientUser.userSkin == 2 ? 1 : 0);
+					command.Parameters.AddWithValue("@userCharacterWin1", (_clientData.gameWin && _clientData.clientUser.userSkin == 0) ? 1 : 0);
+					command.Parameters.AddWithValue("@userCharacterWin2", (_clientData.gameWin && _clientData.clientUser.userSkin == 1) ? 1 : 0);
+					command.Parameters.AddWithValue("@userCharacterWin3", (_clientData.gameWin && _clientData.clientUser.userSkin == 2) ? 1 : 0);
 					command.Parameters.AddWithValue("@userIndex", _userIndex);
 					LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : saveUserGameResult", command.ToString());
 					int inserted = command.ExecuteNonQuery();

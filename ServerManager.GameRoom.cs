@@ -110,8 +110,7 @@ namespace MSB_SERVER
                         clientData.gameBonus = 0;
                         clientData.enduredDamage = 0;
                         clientData.lastKillTime = 0;
-                        clientData.stunTime = 0;
-                        clientData.stunGivenClient = null;
+                        clientData.assistClient = null;
                         clientData.totalGivenDamage = 0;
                         clientData.totalTakenDamage = 0;
                         clientData.gameWin = false;
@@ -175,8 +174,7 @@ namespace MSB_SERVER
                         targetClient.lastKillTime = 0;
                         targetClient.enduredDamage = 0;
                         targetClient.killStreakHistory = new List<NetworkData.ClientData>();
-                        targetClient.stunTime = 0;
-                        targetClient.stunGivenClient = null;
+                        targetClient.assistClient = null;
                         targetClient.gameBonus--;
                         
                         targetClient.gameRespawn = gameUserSpawn;
@@ -270,11 +268,11 @@ namespace MSB_SERVER
                         }
                         
                         // CHECK MEDAL - ASSIST
-                        if (userClient != targetClient && targetClient.stunTime > 0 && targetClient.stunGivenClient != null && targetClient.stunGivenClient != userClient)
+                        if (userClient != targetClient && targetClient.assistClient != null && targetClient.assistClient != userClient)
                         {
                             foreach (NetworkData.ClientData clientData in clientList)
                             {
-                                if (clientData.Equals(targetClient.stunGivenClient))
+                                if (clientData.Equals(targetClient.assistClient))
                                 {
                                     // ACHIEVE clientData ASSIST
                                     userClient.gameBonus++;
@@ -294,6 +292,10 @@ namespace MSB_SERVER
                     }
                     else
                     {
+                        if (targetClient.gameHealth <= 50)
+                        {
+                            targetClient.assistClient = userClient;
+                        }
                         // CHECK MEDAL - ADAMANT
                         if (targetClient.enduredDamage >= 200)
                         {

@@ -44,8 +44,7 @@ namespace MSB_SERVER
             public int gameBonus = 0;
             public int enduredDamage = 0;
             public long lastKillTime = 0;
-            public int stunTime = 0;
-            public ClientData stunGivenClient = null;
+            public ClientData assistClient = null;
             public int totalGivenDamage = 0;
             public int totalTakenDamage = 0;
             public bool gameWin = false;
