@@ -395,7 +395,7 @@ namespace MSB_SERVER.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Mad Square&apos;s Brawl Server v200408.
+        ///   Looks up a localized string similar to Mad Square&apos;s Brawl Server v200412.
         /// </summary>
         public static string STRING_VERSION {
             get {

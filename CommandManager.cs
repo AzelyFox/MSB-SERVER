@@ -142,17 +142,27 @@ namespace MSB_SERVER
             }
             catch { }
         }
-        
-		public void ApplyCommand(string commandRaw)
+
+        /**
+         * result 1 : command success
+         * result 0 : cannot execute
+         * result -1 : invalid command
+         * result -2 : error occurred
+         * message (string) : output message
+         */
+        public JObject ApplyCommand(string commandRaw)
 		{
+            JObject resultMessage = new JObject();
 			if (string.IsNullOrEmpty(commandRaw))
 			{
-				return;
+                resultMessage.Add("result", -1);
+				return resultMessage;
 			}
 			if (!commandRaw.StartsWith("/"))
 			{
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NOT COMMAND");
-				return;
+                resultMessage.Add("result", -1);
+                return resultMessage;
 			}
 
 			try
@@ -163,23 +173,121 @@ namespace MSB_SERVER
 				{
 					case COMMAND_ACTION.ACTION_HELP:
 						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "clear all/system/network\ndebug on/off\nnormal on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
+                        resultMessage.Add("result", 1);
+                        resultMessage.Add("message", "clear all/system/network\ndebug on/off\nnormal on/off\ndetail on/off\nsync tcp/udp\ningame tcp/udp\nscroll on/off\nset ?");
+                        return resultMessage;
 						break;
                     case COMMAND_ACTION.ACTION_START:
-                        if (NetworkManager.IS_SERVER_RUNNING) return;
-                        serverApplication.networkManager.ServerRun("localhost", 9993);
+                        try
+                        {
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.START_MASTER))
+                            {
+                                if (NetworkManager.IS_SERVER_RUNNING)
+                                {
+                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("message", "SERVER ALREADY RUNNING");
+                                    return resultMessage;
+                                }
+                                else
+                                {
+                                    serverApplication.networkManager.ServerRun("localhost", 9993);
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "SERVER STARTED IN 9993");
+                                    return resultMessage;
+                                }
+                            }
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.START_DATABASE))
+                            {
+                                if (DatabaseManager.GetInstance().CURRENT_DB_CONNECTION)
+                                {
+                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("message", "DB MODULE ALREADY RUNNING");
+                                    return resultMessage;
+                                }
+                                else
+                                {
+                                    DatabaseManager.GetInstance().StartDatabase();
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "DB MODULE STARTED");
+                                    return resultMessage;
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
+                        }
                         break;
                     case COMMAND_ACTION.ACTION_STOP:
-                        if (!NetworkManager.IS_SERVER_RUNNING) return;
-                        serverApplication.networkManager.ServerStop();
+                        try
+                        {
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.STOP_MASTER))
+                            {
+                                if (!NetworkManager.IS_SERVER_RUNNING)
+                                {
+                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("message", "SERVER ALREADY STOPPED");
+                                    return resultMessage;
+                                }
+                                else
+                                {
+                                    serverApplication.networkManager.ServerStop();
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "SERVER STOPPED");
+                                    return resultMessage;
+                                }
+                            }
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.STOP_DATABASE))
+                            {
+                                if (!DatabaseManager.GetInstance().CURRENT_DB_CONNECTION)
+                                {
+                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("message", "DB MODULE ALREADY STOPPED");
+                                    return resultMessage;
+                                }
+                                else
+                                {
+                                    DatabaseManager.GetInstance().StopDatabase();
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "DB MODULE STOPPED");
+                                    return resultMessage;
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
+                        }
                         break;
                     case COMMAND_ACTION.ACTION_STATUS:
-                        JObject resultData = new JObject();
-                        resultData.Add("MASTER", NetworkManager.IS_SERVER_RUNNING ? "ON" : "OFF");
-                        resultData.Add("SOLOMM", (serverApplication.serverManager.soloMatchMaker != null && serverApplication.serverManager.soloMatchMaker.IsAlive) ? "ON" : "OFF");
-                        resultData.Add("TEAMMM", (serverApplication.serverManager.teamMatchMaker != null && serverApplication.serverManager.teamMatchMaker.IsAlive) ? "ON" : "OFF");
-                        resultData.Add("DATABASE", serverApplication.databaseManager.CURRENT_DB_CONNECTION ? "ON" : "OFF");
-                        resultData.Add("USERTOTAL", serverApplication.databaseManager.totalUser);
-                        resultData.Add("USERLIVE", ServerManager.serverUserList != null ? ServerManager.serverUserList.Count : 0);
+                        try
+                        {
+                            if (command[1].ToUpper().Equals(COMMAND_TARGET.STATUS_ALL))
+                            {
+                                JObject resultData = new JObject();
+                                resultData.Add("MASTER", NetworkManager.IS_SERVER_RUNNING ? "ON" : "OFF");
+                                resultData.Add("SOLOMM", (serverApplication.serverManager.soloMatchMaker != null && serverApplication.serverManager.soloMatchMaker.IsAlive) ? "ON" : "OFF");
+                                resultData.Add("TEAMMM", (serverApplication.serverManager.teamMatchMaker != null && serverApplication.serverManager.teamMatchMaker.IsAlive) ? "ON" : "OFF");
+                                resultData.Add("DATABASE", serverApplication.databaseManager.CURRENT_DB_CONNECTION ? "ON" : "OFF");
+                                resultData.Add("USERTOTAL", serverApplication.databaseManager.totalUser);
+                                resultData.Add("USERLIVE", ServerManager.serverUserList != null ? ServerManager.serverUserList.Count : 0);
+                                resultData.Add("SYNC_CLIENT", serverApplication.serverManager.SYNC_PROTOCOL_TCP ? "TCP" : "UDP");
+                                resultData.Add("INGAME_CLIENT", serverApplication.serverManager.INGAME_SYNC_PROTOCOL_TCP ? "TCP" : "UDP");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", resultData);
+                                return resultMessage;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
+                        }
                         break;
                     case COMMAND_ACTION.ACTION_CLEAR:
                         try
@@ -188,20 +296,32 @@ namespace MSB_SERVER
                             {
                                 serverApplication.logManager.ClearLog();
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLEARED LOG");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "CLEARED LOG");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.CLEAR_LOG_SYSTEM))
                             {
                                 serverApplication.logManager.ClearLog(1);
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLEARED SYSTEM LOG");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "CLEARED SYSTEM LOG");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.CLEAR_LOG_NETWORK))
                             {
                                 serverApplication.logManager.ClearLog(2);
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLEARED NETWORK LOG");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "CLEARED NETWORK LOG");
+                                return resultMessage;
                             }
-                        } catch (Exception)
+                        }
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_DEBUG:
@@ -210,16 +330,25 @@ namespace MSB_SERVER
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.DEBUG_LOG_ON))
                             {
                                 serverApplication.logManager.SAVE_DEBUG_LOGS = true;
-                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DEBUG PRINT ON");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DEBUG LEVEL PRINT ON");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "DEBUG LEVEL PRINT ON");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.DEBUG_LOG_OFF))
                             {
                                 serverApplication.logManager.SAVE_DEBUG_LOGS = false;
-                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DEBUG PRINT OFF");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DEBUG LEVEL PRINT OFF");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "DEBUG LEVEL PRINT OFF");
+                                return resultMessage;
                             }
-                        } catch (Exception)
+                        }
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_NORMAL:
@@ -228,16 +357,25 @@ namespace MSB_SERVER
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.NORMAL_LOG_ON))
                             {
                                 serverApplication.logManager.SAVE_DEBUG_LOGS = true;
-                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL PRINT ON");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL LEVEL PRINT ON");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "NORMAL LEVEL PRINT ON");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.NORMAL_LOG_OFF))
                             {
                                 serverApplication.logManager.SAVE_DEBUG_LOGS = false;
-                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL PRINT OFF");
+                                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NORMAL LEVEL PRINT OFF");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "NORMAL LEVEL PRINT OFF");
+                                return resultMessage;
                             }
-                        } catch (Exception)
+                        }
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_DETAIL:
@@ -247,16 +385,24 @@ namespace MSB_SERVER
                             {
                                 serverApplication.serverManager.DETAIL_LOG = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DETAIL PRINT ON");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "DETAIL LEVEL PRINT ON");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.DETAIL_LOG_OFF))
                             {
                                 serverApplication.serverManager.DETAIL_LOG = false;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "DETAIL PRINT OFF");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "DETAIL LEVEL PRINT OFF");
+                                return resultMessage;
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_SYNC:
@@ -267,17 +413,25 @@ namespace MSB_SERVER
                                 serverApplication.serverManager.SYNC_PROTOCOL_UDP = false;
                                 serverApplication.serverManager.SYNC_PROTOCOL_TCP = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLIENT SYNC PROTOCOL IS TCP");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "CLIENT SYNC PROTOCOL IS NOW TCP");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SYNC_UDP))
                             {
                                 serverApplication.serverManager.SYNC_PROTOCOL_TCP = false;
                                 serverApplication.serverManager.SYNC_PROTOCOL_UDP = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "CLIENT SYNC PROTOCOL IS UDP");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "CLIENT SYNC PROTOCOL IS NOW UDP");
+                                return resultMessage;
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_INGAME:
@@ -288,17 +442,25 @@ namespace MSB_SERVER
                                 serverApplication.serverManager.INGAME_SYNC_PROTOCOL_UDP = false;
                                 serverApplication.serverManager.INGAME_SYNC_PROTOCOL_TCP = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "INGAME SYNC PROTOCOL IS TCP");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "INGAME SYNC PROTOCOL IS NOW TCP");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.INGAME_UDP))
                             {
                                 serverApplication.serverManager.INGAME_SYNC_PROTOCOL_TCP = false;
                                 serverApplication.serverManager.INGAME_SYNC_PROTOCOL_UDP = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "INGAME SYNC PROTOCOL IS UDP");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "INGAME SYNC PROTOCOL IS NOW UDP");
+                                return resultMessage;
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_SCROLL:
@@ -308,16 +470,24 @@ namespace MSB_SERVER
                             {
                                 serverApplication.logManager.SCROLL_TO_END = true;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "AUTO SCROLL ON");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "LOG AUTO SCROLL ON");
+                                return resultMessage;
                             }
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SCROLL_OFF))
                             {
                                 serverApplication.logManager.SCROLL_TO_END = false;
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "AUTO SCROLL OFF");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", "LOG AUTO SCROLL OFF");
+                                return resultMessage;
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     case COMMAND_ACTION.ACTION_SET_GAME:
@@ -326,14 +496,24 @@ namespace MSB_SERVER
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_HELP))
                             {
                                 serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw,
-                                    COMMAND_TARGET.SET_GAME_TIME + " : 게임 플레이타임\n" +
-                                    COMMAND_TARGET.SET_GAME_USER_RESPAWN + " : 유저 리스폰시간\n" +
-                                    COMMAND_TARGET.SET_GAME_HEAL + " : 힐팩 회복용량\n" +
-                                    COMMAND_TARGET.SET_GAME_HEAL_RESPAWN + " : 힐팩 스폰시간\n" +
-                                    COMMAND_TARGET.SET_GAME_OBJECT_HEALTH + " : 오브젝트 체력\n" +
-                                    COMMAND_TARGET.SET_GAME_POINT_VALUE + " : 스코어 증가점수\n" +
-                                    COMMAND_TARGET.SET_GAME_POINT_RESPAWN + " : 스코어 스폰시간");
+                                    COMMAND_TARGET.SET_GAME_TIME + " : GAME PLAYTIME\n" +
+                                    COMMAND_TARGET.SET_GAME_USER_RESPAWN + " : USER SPAWN TIME\n" +
+                                    COMMAND_TARGET.SET_GAME_HEAL + " : HEALPACK AMOUNT\n" +
+                                    COMMAND_TARGET.SET_GAME_HEAL_RESPAWN + " : HEALPACK SPAWN TIME\n" +
+                                    COMMAND_TARGET.SET_GAME_OBJECT_HEALTH + " : OBJECT HEALTH\n" +
+                                    COMMAND_TARGET.SET_GAME_POINT_VALUE + " : SCORE AMOUNT\n" +
+                                    COMMAND_TARGET.SET_GAME_POINT_RESPAWN + " : SCORE SPAWN TIME");
+                                resultMessage.Add("result", 1);
+                                resultMessage.Add("message", COMMAND_TARGET.SET_GAME_TIME + " : GAME PLAYTIME\n" +
+                                                             COMMAND_TARGET.SET_GAME_USER_RESPAWN + " : USER SPAWN TIME\n" +
+                                                             COMMAND_TARGET.SET_GAME_HEAL + " : HEALPACK AMOUNT\n" +
+                                                             COMMAND_TARGET.SET_GAME_HEAL_RESPAWN + " : HEALPACK SPAWN TIME\n" +
+                                                             COMMAND_TARGET.SET_GAME_OBJECT_HEALTH + " : OBJECT HEALTH\n" +
+                                                             COMMAND_TARGET.SET_GAME_POINT_VALUE + " : SCORE AMOUNT\n" +
+                                                             COMMAND_TARGET.SET_GAME_POINT_RESPAWN + " : SCORE SPAWN TIME");
+                                return resultMessage;
                             }
+                            
                             if (command[1].ToUpper().Equals(COMMAND_TARGET.SET_GAME_TIME))
                             {
                                 var inputValue = int.Parse(command[2]);
@@ -341,6 +521,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gameTime = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "게임 플레이타임 : " + inputValue + " SEC");
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "GAME PLAYTIME IS NOW " + inputValue + " SEC");
+                                    return resultMessage;
                                 }
                             }
 
@@ -351,6 +534,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gameUserSpawn = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "유저 리스폰타임 : " + inputValue + " SEC");
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "USER SPAWN TIME IS NOW " + inputValue + " SEC");
+                                    return resultMessage;
                                 }
                             }
 
@@ -361,6 +547,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gameHealPackValue = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "힐팩 회복용량 : " + inputValue);
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "HEALPACK AMOUNT IS NOW " + inputValue);
+                                    return resultMessage;
                                 }
                             }
 
@@ -371,6 +560,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gameHealPackSpawn = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "힐팩 스폰시간 : " + inputValue + " SEC");
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "HEALPACK SPAWN TIME IS NOW " + inputValue + " SEC");
+                                    return resultMessage;
                                 }
                             }
 
@@ -381,6 +573,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gameObjectHealth = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "오브젝트 체력 : " + inputValue);
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "OBJECT HEALTH IS NOW " + inputValue);
+                                    return resultMessage;
                                 }
                             }
 
@@ -391,6 +586,9 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gamePointValue = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "스코어 증가점수 : " + inputValue);
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "SCORE AMOUNT IS NOW " + inputValue);
+                                    return resultMessage;
                                 }
                             }
 
@@ -401,23 +599,35 @@ namespace MSB_SERVER
                                 {
                                     ServerManager.GameRoom.gamePointSpawn = inputValue;
                                     serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "스코어 스폰시간 : " + inputValue + " SEC");
+                                    resultMessage.Add("result", 1);
+                                    resultMessage.Add("message", "SCORE SPAWN TIME IS NOW " + inputValue + " SEC");
+                                    return resultMessage;
                                 }
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
-
+                            resultMessage.Add("result", -2);
+                            resultMessage.Add("message", e.ToString());
+                            return resultMessage;
                         }
                         break;
                     default:
 						serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "NOT COMMAND");
+                        resultMessage.Add("result", -1);
+                        return resultMessage;
 						break;
 				}
 			} catch (Exception e)
 			{
 				serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, commandRaw, "ERROR : " + e);
+                resultMessage.Add("result", -2);
+                resultMessage.Add("message", e.ToString());
+                return resultMessage;
 			}
-		}
+
+            return resultMessage;
+        }
         
         private class RemoteCommand : WebSocketBehavior
         {
@@ -427,7 +637,7 @@ namespace MSB_SERVER
                 try
                 {
                     LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "REMOTE CONTROL", commandRaw);
-                    CommandManager.GetInstance().ApplyCommand(commandRaw);
+                    GetInstance().ApplyCommand(commandRaw);
                 }
                 catch (Exception exception)
                 {
