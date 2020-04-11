@@ -516,6 +516,43 @@ namespace MSB_SERVER
 							dataReader.Close();
 						}
 					}
+					using (MySqlCommand userAchievementCommand = dbConnection.CreateCommand())
+					{
+						userAchievementCommand.CommandText = $"SELECT * FROM `user` WHERE `user_index` = {_index}";
+						LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_DEBUG, LogManager.LOG_TARGET.LOG_SYSTEM, "DatabaseManager : RequestMedalStatus", userAchievementCommand.ToString());
+						using (MySqlDataReader dataReader = userAchievementCommand.ExecuteReader())
+						{
+							if (dataReader.Read()) {
+								int user_played = dataReader.GetInt32(dataReader.GetOrdinal("user_played"));
+								int user_win = dataReader.GetInt32(dataReader.GetOrdinal("user_win"));
+								int user_kill = dataReader.GetInt32(dataReader.GetOrdinal("user_kill"));
+								int user_death = dataReader.GetInt32(dataReader.GetOrdinal("user_death"));
+								int user_assist = dataReader.GetInt32(dataReader.GetOrdinal("user_assist"));
+								int user_damage_give = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_give"));
+								int user_damage_take = dataReader.GetInt32(dataReader.GetOrdinal("user_damage_take"));
+								int user_character_1 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_1"));
+								int user_character_2 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_2"));
+								int user_character_3 = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3"));
+								int user_character_1_win = dataReader.GetInt32(dataReader.GetOrdinal("user_character_1_win"));
+								int user_character_2_win = dataReader.GetInt32(dataReader.GetOrdinal("user_character_2_win"));
+								int user_character_3_win = dataReader.GetInt32(dataReader.GetOrdinal("user_character_3_win"));
+								userMedalResult.Add("user_played", user_played);
+								userMedalResult.Add("user_win", user_win);
+								userMedalResult.Add("user_kill", user_kill);
+								userMedalResult.Add("user_death", user_death);
+								userMedalResult.Add("user_assist", user_assist);
+								userMedalResult.Add("user_damage_give", user_damage_give);
+								userMedalResult.Add("user_damage_take", user_damage_take);
+								userMedalResult.Add("user_character_1", user_character_1);
+								userMedalResult.Add("user_character_2", user_character_2);
+								userMedalResult.Add("user_character_3", user_character_3);
+								userMedalResult.Add("user_character_1_win", user_character_1_win);
+								userMedalResult.Add("user_character_2_win", user_character_2_win);
+								userMedalResult.Add("user_character_3_win", user_character_3_win);
+							}
+							dataReader.Close();
+						}
+					}
 				}
 				message = userMedalResult.ToString();
 				return true;

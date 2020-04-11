@@ -276,6 +276,7 @@ namespace MSB_SERVER
                                 {
                                     // ACHIEVE clientData ASSIST
                                     userClient.gameBonus++;
+                                    clientData.gameAssist++;
                                     clientData.assistHistory.Add(targetClient);
                                     int medalIndex = DatabaseManager.GetInstance().saveUserMedal(this, clientData.clientUser.userNumber, 6);
                                     clientData.medalHistory.Add(medalIndex);
