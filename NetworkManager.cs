@@ -54,7 +54,14 @@ namespace MSB_SERVER
             {
                 SERVER_PORT = _SERVER_PORT;
 
-                serverApplication.logManager.ClearLog();
+                try
+                {
+                    serverApplication.logManager.ClearLog();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
 
                 if (_SERVER_IP.Equals("localhost"))
                 {

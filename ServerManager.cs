@@ -885,8 +885,7 @@ namespace MSB_SERVER
             }
             catch (Exception e)
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserMove ERROR");
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
+                Console.WriteLine(e);
             }
         }
 
@@ -917,8 +916,7 @@ namespace MSB_SERVER
             }
             catch (Exception e)
             {
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", "OnGameUserSync ERROR");
-                serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_NETWORK, "ServerManager", e.ToString());
+	            Console.WriteLine(e);
             }
         }
     }
