@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using Newtonsoft.Json.Linq;
@@ -12,8 +13,13 @@ namespace MSB_SERVER
 		private static CommandManager INSTANCE;
 
 		private readonly App serverApplication;
+        
         private WebSocketServer controlServer = null;
         private Thread controlStatusThread;
+        
+        private static WebSocket serviceDEVXControl = null;
+        private static Thread serviceDEVXMonitor;
+        
         private bool MODULE_STOP_FLAG = false;
 
 		private static class COMMAND_ACTION
@@ -90,11 +96,19 @@ namespace MSB_SERVER
                 {
                     Priority = ThreadPriority.Lowest
                 };
-            } else if (controlStatusThread.IsAlive)
-            {
-                return;
+                controlStatusThread.Start();
             }
-            controlStatusThread.Start();
+            
+            serviceDEVXControl = new WebSocket("ws://localhost:8888/MSBListener");
+            serviceDEVXControl.Connect();
+            if (serviceDEVXMonitor == null || !serviceDEVXMonitor.IsAlive)
+            {
+                serviceDEVXMonitor = new Thread(MonitorDEVX)
+                {
+                    Priority = ThreadPriority.Lowest
+                };
+                serviceDEVXMonitor.Start();
+            }
         }
 
         public void StopController()
@@ -144,15 +158,30 @@ namespace MSB_SERVER
         }
 
         /**
+         * type (int) : critical message : 2
+         * message (string) : output message
+         */
+        public void OnCriticalMessage(string message)
+        {
+            JObject resultMessage = new JObject();
+            resultMessage.Add("type", 2);
+            resultMessage.Add("message", message);
+            if (serviceDEVXControl != null && serviceDEVXControl.IsAlive) serviceDEVXControl.Send(message);
+        }
+        
+        /**
+         * type (int) : command result : 1
          * result 1 : command success
-         * result 0 : cannot execute
          * result -1 : invalid command
          * result -2 : error occurred
+         * result -3 : cannot execute
          * message (string) : output message
          */
         public JObject ApplyCommand(string commandRaw)
 		{
             JObject resultMessage = new JObject();
+            resultMessage.Add("type", 1);
+            
 			if (string.IsNullOrEmpty(commandRaw))
 			{
                 resultMessage.Add("result", -1);
@@ -184,7 +213,7 @@ namespace MSB_SERVER
                             {
                                 if (NetworkManager.IS_SERVER_RUNNING)
                                 {
-                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("result", -3);
                                     resultMessage.Add("message", "SERVER ALREADY RUNNING");
                                     return resultMessage;
                                 }
@@ -200,7 +229,7 @@ namespace MSB_SERVER
                             {
                                 if (DatabaseManager.GetInstance().CURRENT_DB_CONNECTION)
                                 {
-                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("result", -3);
                                     resultMessage.Add("message", "DB MODULE ALREADY RUNNING");
                                     return resultMessage;
                                 }
@@ -227,7 +256,7 @@ namespace MSB_SERVER
                             {
                                 if (!NetworkManager.IS_SERVER_RUNNING)
                                 {
-                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("result", -3);
                                     resultMessage.Add("message", "SERVER ALREADY STOPPED");
                                     return resultMessage;
                                 }
@@ -243,7 +272,7 @@ namespace MSB_SERVER
                             {
                                 if (!DatabaseManager.GetInstance().CURRENT_DB_CONNECTION)
                                 {
-                                    resultMessage.Add("result", 0);
+                                    resultMessage.Add("result", -3);
                                     resultMessage.Add("message", "DB MODULE ALREADY STOPPED");
                                     return resultMessage;
                                 }
@@ -629,6 +658,31 @@ namespace MSB_SERVER
             return resultMessage;
         }
         
+        private void MonitorDEVX()
+        {
+            while (true)
+            {
+                if (MODULE_STOP_FLAG) break;
+                if (serviceDEVXControl == null) continue;
+
+                if (serviceDEVXControl != null)
+                {
+                    if (!serviceDEVXControl.IsAlive)
+                    {
+                        serviceDEVXControl.Connect();
+                        serverApplication.graphicalManager.OnCommandModuleStatusChanged(true, false);
+                    }
+                }
+                else
+                {
+                    serverApplication.graphicalManager.OnCommandModuleStatusChanged(true, false);
+                    serverApplication.logManager.NewLog(LogManager.LOG_LEVEL.LOG_CRITICAL, LogManager.LOG_TARGET.LOG_SYSTEM, "CommandManager", "DEVX LISTENER 초기화 실패");
+                }
+
+                Thread.Sleep(1000);
+            }
+        }
+        
         private class RemoteCommand : WebSocketBehavior
         {
             protected override void OnMessage(MessageEventArgs e)
@@ -636,8 +690,9 @@ namespace MSB_SERVER
                 string commandRaw = e.Data;
                 try
                 {
-                    LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "REMOTE CONTROL", commandRaw);
-                    GetInstance().ApplyCommand(commandRaw);
+                    LogManager.GetInstance().NewLog(LogManager.LOG_LEVEL.LOG_NORMAL, LogManager.LOG_TARGET.LOG_SYSTEM, "REMOTE CONTROL", commandRaw.Trim());
+                    JObject commandResult = GetInstance().ApplyCommand(commandRaw.Trim());
+                    serviceDEVXControl?.Send(commandResult.ToString());
                 }
                 catch (Exception exception)
                 {

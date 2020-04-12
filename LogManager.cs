@@ -39,6 +39,11 @@ namespace MSB_SERVER
 			public string prefix;
 			public string message;
 			public string datetime;
+
+			public override string ToString()
+			{
+				return "[" + logLevel + "] " + prefix + " (" + datetime + ") : " + message;
+			}
 		}
 
 		private LinkedList<LogObject> logList;
@@ -161,10 +166,17 @@ namespace MSB_SERVER
 			logObject.prefix = prefix;
 			logObject.message = message;
 			logObject.datetime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff");
+			
+			if (logLevel == LOG_LEVEL.LOG_CRITICAL)
+			{
+				serverApplication.commandManager.OnCriticalMessage(logObject.ToString());
+			}
+			
 			lock (logList)
 			{
 				logList.AddLast(logObject);
 			}
+			
             serverApplication.Dispatcher?.Invoke(() => {
 	            SyncLogBox();
             });
