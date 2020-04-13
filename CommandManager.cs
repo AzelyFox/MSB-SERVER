@@ -158,19 +158,19 @@ namespace MSB_SERVER
         }
 
         /**
-         * type (int) : critical message : 2
+         * level (int) : critical message : 2
          * message (string) : output message
          */
         public void OnCriticalMessage(string message)
         {
             JObject resultMessage = new JObject();
-            resultMessage.Add("type", 2);
+            resultMessage.Add("level", 2);
             resultMessage.Add("message", message);
             if (serviceDEVXControl != null && serviceDEVXControl.IsAlive) serviceDEVXControl.Send(message);
         }
         
         /**
-         * type (int) : command result : 1
+         * level (int) : command result : 1
          * result 1 : command success
          * result -1 : invalid command
          * result -2 : error occurred
@@ -180,7 +180,7 @@ namespace MSB_SERVER
         public JObject ApplyCommand(string commandRaw)
 		{
             JObject resultMessage = new JObject();
-            resultMessage.Add("type", 1);
+            resultMessage.Add("level", 1);
             
 			if (string.IsNullOrEmpty(commandRaw))
 			{
@@ -307,6 +307,7 @@ namespace MSB_SERVER
                                 resultData.Add("SYNC_CLIENT", serverApplication.serverManager.SYNC_PROTOCOL_TCP ? "TCP" : "UDP");
                                 resultData.Add("INGAME_CLIENT", serverApplication.serverManager.INGAME_SYNC_PROTOCOL_TCP ? "TCP" : "UDP");
                                 resultMessage.Add("result", 1);
+                                resultMessage.Add("type", 1);
                                 resultMessage.Add("message", resultData);
                                 return resultMessage;
                             }
