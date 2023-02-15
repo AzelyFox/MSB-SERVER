@@ -6,12 +6,12 @@
 
 <p align="center">
     <a href="#license">
-        <img src="https://img.shields.io/github/license/LIMECAKE/MSB-SERVER?style=flat-square" />
+        <img src="https://img.shields.io/github/license/AzelyFox/MSB-SERVER?style=flat-square" />
     </a>
-    <a href="https://github.com/LIMECAKE/MSB-SERVER/releases">
-        <img src="https://img.shields.io/github/v/release/LIMECAKE/MSB-SERVER?style=flat-square" />
+    <a href="https://github.com/AzelyFox/MSB-SERVER/releases">
+        <img src="https://img.shields.io/github/v/release/AzelyFox/MSB-SERVER?style=flat-square" />
     </a>
-    <a href="https://github.com/LIMECAKE/MSB-SERVER/issues">
+    <a href="https://github.com/AzelyFox/MSB-SERVER/issues">
         <img src="https://img.shields.io/badge/SUPPORT-LIVE-green?style=flat-square" />
     </a>
 </p>
